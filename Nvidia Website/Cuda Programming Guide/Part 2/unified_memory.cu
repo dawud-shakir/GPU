@@ -176,6 +176,7 @@ int main(int argc, char** argv)
     int vectorLength = 1024;
     if(argc >=2)
     {
+        printf("argv[1]=%d\n", std::atoi(argv[1]));
         vectorLength = std::atoi(argv[1]);
     }
     unifiedMemExample(vectorLength);		
