@@ -1,3 +1,5 @@
+// Compile: nvcc -O3 -gencode arch=compute_75,code=sm_75 unified_memory.cu -o unified_memory
+
 #include <cuda_runtime_api.h>
 #include <memory.h>
 #include <cstdlib>
