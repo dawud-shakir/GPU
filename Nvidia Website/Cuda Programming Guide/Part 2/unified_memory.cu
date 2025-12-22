@@ -148,7 +148,7 @@ void unifiedMemExample(int vectorLength)
     // Perform computation serially on CPU for comparison
     serialVecAdd(A, B, comparisonResult, vectorLength);
 
-    printf("n=%d, blocks=%d, threads=%d\n", n, blocks, threads);
+    printf("n=%d, blocks=%d, threads=%d\n", vectorLength, blocks, threads);
     printf("Avg kernel time: %.4f ms (over %d iters)\n", ms_per, iters);
 
     // Confirm that CPU and GPU got the same answer
