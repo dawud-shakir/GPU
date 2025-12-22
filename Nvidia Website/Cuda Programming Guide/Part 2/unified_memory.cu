@@ -172,7 +172,7 @@ void unifiedMemExample(int vectorLength)
 
 int main(int argc, char** argv)
 {
-    printf("argc=%d\n", argc)
+    printf("argc=%d\n", argc);
     int vectorLength = 1024;
     if(argc >=2)
     {
