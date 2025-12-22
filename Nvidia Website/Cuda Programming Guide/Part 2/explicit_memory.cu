@@ -3,7 +3,8 @@
 #include <cstdlib>
 #include <ctime>
 #include <stdio.h>
-#include <cuda/cmath>
+// #include <cuda/cmath>    // only in newer versions
+#include <cmath>
 
 __global__ void vecAdd(float* A, float* B, float* C, int vectorLength)
 {
@@ -82,8 +83,10 @@ void explicitMemExample(int vectorLength)
 
     // Launch the kernel
     int threads = 256;
-    int blocks = cuda::ceil_div(vectorLength, threads);
-    vecAdd<<<blocks, threads>>>(devA, devB, devC);
+    // int blocks = cuda::ceil_div(vectorLength, threads);
+    int blocks = (vectorLength + threads - 1) / threads;
+    
+    vecAdd<<<blocks, threads>>>(devA, devB, devC, vectorLength);
     // wait for kernel execution to complete
     cudaDeviceSynchronize();
 

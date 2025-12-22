@@ -3,7 +3,8 @@
 #include <cstdlib>
 #include <ctime>
 #include <stdio.h>
-#include <cuda/cmath>
+// #include <cuda/cmath> // only in newer versions
+#include <cmath>
 
 __global__ void vecAdd(float* A, float* B, float* C, int vectorLength)
 {
@@ -65,7 +66,9 @@ void unifiedMemExample(int vectorLength)
     // Launch the kernel. Unified memory will make sure A, B, and C are
     // accessible to the GPU
     int threads = 256;
-    int blocks = cuda::ceil_div(vectorLength, threads);
+    // int blocks = cuda::ceil_div(vectorLength, threads);
+    int blocks = (vectorLength + threads - 1) / threads;
+    
     vecAdd<<<blocks, threads>>>(A, B, C, vectorLength);
     // Wait for the kernel to complete execution
     cudaDeviceSynchronize();
