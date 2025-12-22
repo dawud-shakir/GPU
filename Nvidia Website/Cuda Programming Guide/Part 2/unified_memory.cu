@@ -145,11 +145,11 @@ void unifiedMemExample(int vectorLength)
     cudaEventElapsedTime(&ms, start, stop);
     float ms_per = ms / iters;
 
-    // Perform computation serially on CPU for comparison
-    serialVecAdd(A, B, comparisonResult, vectorLength);
-
     printf("n=%d, blocks=%d, threads=%d\n", vectorLength, blocks, threads);
     printf("Avg kernel time: %.4f ms (over %d iters)\n", ms_per, iters);
+
+    // Perform computation serially on CPU for comparison
+    serialVecAdd(A, B, comparisonResult, vectorLength);
 
     // Confirm that CPU and GPU got the same answer
     if(vectorApproximatelyEqual(C, comparisonResult, vectorLength))

@@ -165,7 +165,7 @@ void explicitMemExample(int vectorLength)
     // wait for kernel execution to complete
     cudaDeviceSynchronize();
 
-        // Timed runs
+    // Timed runs
     const int iters = 50;
     cudaEvent_t start, stop;
     cudaEventCreate(&start);
@@ -173,7 +173,7 @@ void explicitMemExample(int vectorLength)
 
     cudaEventRecord(start);
     for (int it = 0; it < iters; ++it) {
-        vecAdd<<<blocks, threads>>>(A, B, C, vectorLength);        
+        vecAdd<<<blocks, threads>>>(devA, devB, devC, vectorLength);        
     }
 
     cudaEventRecord(stop);
