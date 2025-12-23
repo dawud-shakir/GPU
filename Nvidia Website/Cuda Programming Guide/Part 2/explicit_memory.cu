@@ -8,6 +8,19 @@
 // #include <cuda/cmath>    // only in newer versions
 #include <cmath>
 
+#define CUDA_CHECK(expr_to_check) do {            \
+    cudaError_t result  = expr_to_check;          \
+    if(result != cudaSuccess)                     \
+    {                                             \
+        fprintf(stderr,                           \
+                "CUDA Runtime Error: %s:%i:%d = %s\n", \
+                __FILE__,                         \
+                __LINE__,                         \
+                result,\
+                cudaGetErrorString(result));      \
+    }                                             \
+} while(0)
+
 __global__ void vecAdd(float* A, float* B, float* C, int vectorLength)
 {
     int workIndex = threadIdx.x + blockIdx.x*blockDim.x;
@@ -135,9 +148,9 @@ void explicitMemExample(int vectorLength)
 
     //Allocate Host Memory using cudaMallocHost API. This is best practice
     // when buffers will be used for copies between CPU and GPU memory
-    cudaMallocHost(&A, vectorLength*sizeof(float));
-    cudaMallocHost(&B, vectorLength*sizeof(float));
-    cudaMallocHost(&C, vectorLength*sizeof(float));
+    CUDA_CHECK(cudaMallocHost(&A, vectorLength*sizeof(float)));
+    CUDA_CHECK(cudaMallocHost(&B, vectorLength*sizeof(float)));
+    CUDA_CHECK(cudaMallocHost(&C, vectorLength*sizeof(float)));
 
     // Initialize vectors on the host
     initArray(A, vectorLength);
@@ -145,14 +158,14 @@ void explicitMemExample(int vectorLength)
 
     // start-allocate-and-copy
     // Allocate memory on the GPU
-    cudaMalloc(&devA, vectorLength*sizeof(float));
-    cudaMalloc(&devB, vectorLength*sizeof(float));
-    cudaMalloc(&devC, vectorLength*sizeof(float));
+    CUDA_CHECK(cudaMalloc(&devA, vectorLength*sizeof(float)));
+    CUDA_CHECK(cudaMalloc(&devB, vectorLength*sizeof(float)));
+    CUDA_CHECK(cudaMalloc(&devC, vectorLength*sizeof(float)));
 
     // Copy data to the GPU
-    cudaMemcpy(devA, A, vectorLength*sizeof(float), cudaMemcpyDefault);
-    cudaMemcpy(devB, B, vectorLength*sizeof(float), cudaMemcpyDefault);
-    cudaMemset(devC, 0, vectorLength*sizeof(float));
+    CUDA_CHECK(cudaMemcpy(devA, A, vectorLength*sizeof(float), cudaMemcpyDefault));
+    CUDA_CHECK(cudaMemcpy(devB, B, vectorLength*sizeof(float), cudaMemcpyDefault));
+    CUDA_CHECK(cudaMemset(devC, 0, vectorLength*sizeof(float)));
     // end-allocate-and-copy
 
     // Launch the kernel
@@ -162,32 +175,34 @@ void explicitMemExample(int vectorLength)
     
     // Warmup
     vecAdd<<<blocks, threads>>>(devA, devB, devC, vectorLength);
+    // check error sate after kernel launch
+    CUDA_CHECK(cudaGetLastError());
     // wait for kernel execution to complete
-    cudaDeviceSynchronize();
+    CUDA_CHECK(cudaDeviceSynchronize());
 
     // Timed runs
     const int iters = 50;
     cudaEvent_t start, stop;
-    cudaEventCreate(&start);
-    cudaEventCreate(&stop);
+    CUDA_CHECK(cudaEventCreate(&start));
+    CUDA_CHECK(cudaEventCreate(&stop));
 
-    cudaEventRecord(start);
+    CUDA_CHECK(cudaEventRecord(start));
     for (int it = 0; it < iters; ++it) {
         vecAdd<<<blocks, threads>>>(devA, devB, devC, vectorLength);        
     }
 
-    cudaEventRecord(stop);
-    cudaEventSynchronize(stop);
+    CUDA_CHECK(cudaEventRecord(stop));
+    CUDA_CHECK(cudaEventSynchronize(stop));
 
     float ms = 0.0f;
-    cudaEventElapsedTime(&ms, start, stop);
+    CUDA_CHECK(cudaEventElapsedTime(&ms, start, stop));
     float ms_per = ms / iters;
 
     printf("n=%d, blocks=%d, threads=%d\n", vectorLength, blocks, threads);
     printf("Avg kernel time: %.4f ms (over %d iters)\n", ms_per, iters);
 
     // Copy results back to host
-    cudaMemcpy(C, devC, vectorLength*sizeof(float), cudaMemcpyDefault);
+    CUDA_CHECK(cudaMemcpy(C, devC, vectorLength*sizeof(float), cudaMemcpyDefault));
 
     // Perform computation serially on CPU for comparison
     serialVecAdd(A, B, comparisonResult, vectorLength);
@@ -203,12 +218,12 @@ void explicitMemExample(int vectorLength)
     }
 
     // clean up
-    cudaFree(devA);
-    cudaFree(devB);
-    cudaFree(devC);
-    cudaFreeHost(A);
-    cudaFreeHost(B);
-    cudaFreeHost(C);
+    CUDA_CHECK(cudaFree(devA));
+    CUDA_CHECK(cudaFree(devB));
+    CUDA_CHECK(cudaFree(devC));
+    CUDA_CHECK(cudaFreeHost(A));
+    CUDA_CHECK(cudaFreeHost(B));
+    CUDA_CHECK(cudaFreeHost(C));
     free(comparisonResult);
 }
 //explicit-memory-end

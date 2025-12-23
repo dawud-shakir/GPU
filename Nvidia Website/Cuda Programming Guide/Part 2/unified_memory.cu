@@ -8,6 +8,19 @@
 // #include <cuda/cmath> // only in newer versions
 #include <cmath>
 
+#define CUDA_CHECK(expr_to_check) do {            \
+    cudaError_t result  = expr_to_check;          \
+    if(result != cudaSuccess)                     \
+    {                                             \
+        fprintf(stderr,                           \
+                "CUDA Runtime Error: %s:%i:%d = %s\n", \
+                __FILE__,                         \
+                __LINE__,                         \
+                result,\
+                cudaGetErrorString(result));      \
+    }                                             \
+} while(0)
+
 __global__ void vecAdd(float* A, float* B, float* C, int vectorLength)
 {
     int workIndex = threadIdx.x + blockIdx.x*blockDim.x;
@@ -108,9 +121,9 @@ void unifiedMemExample(int vectorLength)
     float* comparisonResult = (float*)malloc(vectorLength*sizeof(float));
 
     // Use unified memory to allocate buffers
-    cudaMallocManaged(&A, vectorLength*sizeof(float));
-    cudaMallocManaged(&B, vectorLength*sizeof(float));
-    cudaMallocManaged(&C, vectorLength*sizeof(float));
+    CUDA_CHECK(cudaMallocManaged(&A, vectorLength*sizeof(float)));
+    CUDA_CHECK(cudaMallocManaged(&B, vectorLength*sizeof(float)));
+    CUDA_CHECK(cudaMallocManaged(&C, vectorLength*sizeof(float)));
 
     // Initialize vectors on the host
     initArray(A, vectorLength);
@@ -124,25 +137,27 @@ void unifiedMemExample(int vectorLength)
     
     // Warmup
     vecAdd<<<blocks, threads>>>(A, B, C, vectorLength);
+    // check error state after kernel launch
+    CUDA_CHECK(cudaGetLastError());
     // Wait for the kernel to complete execution
-    cudaDeviceSynchronize();
+    CUDA_CHECK(cudaDeviceSynchronize());
 
     // Timed runs
     const int iters = 50;
     cudaEvent_t start, stop;
-    cudaEventCreate(&start);
-    cudaEventCreate(&stop);
+    CUDA_CHECK(cudaEventCreate(&start));
+    CUDA_CHECK(cudaEventCreate(&stop));
 
-    cudaEventRecord(start);
+    CUDA_CHECK(cudaEventRecord(start));
     for (int it = 0; it < iters; ++it) {
         vecAdd<<<blocks, threads>>>(A, B, C, vectorLength);        
     }
 
-    cudaEventRecord(stop);
-    cudaEventSynchronize(stop);
+    CUDA_CHECK(cudaEventRecord(stop));
+    CUDA_CHECK(cudaEventSynchronize(stop));
 
     float ms = 0.0f;
-    cudaEventElapsedTime(&ms, start, stop);
+    CUDA_CHECK(cudaEventElapsedTime(&ms, start, stop));
     float ms_per = ms / iters;
 
     printf("n=%d, blocks=%d, threads=%d\n", vectorLength, blocks, threads);
@@ -162,9 +177,9 @@ void unifiedMemExample(int vectorLength)
     }
 
     // Clean Up
-    cudaFree(A);
-    cudaFree(B);
-    cudaFree(C);
+    CUDA_CHECK(cudaFree(A));
+    CUDA_CHECK(cudaFree(B));
+    CUDA_CHECK(cudaFree(C));
     free(comparisonResult);
 
 }
