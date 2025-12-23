@@ -192,6 +192,7 @@ int main(int argc, char** argv)
     {
         vectorLength = std::atoi(argv[1]);
     }
+    printf("Unified Memory Example\n");
     unifiedMemExample(vectorLength);		
     return 0;
 }

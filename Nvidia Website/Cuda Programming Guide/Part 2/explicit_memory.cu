@@ -236,6 +236,7 @@ int main(int argc, char** argv)
     {
         vectorLength = std::atoi(argv[1]);
     }
+    printf("Explicit Memory Example\n");
     explicitMemExample(vectorLength);		
     return 0;
 }
