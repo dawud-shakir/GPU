@@ -27,17 +27,17 @@ __global__ void matmul(float* A, float* B, float* C, int n)
     C[row*n + col] = sum;
 }
 
-void run_matmat(float* A, float* B, float* C, int n)
-{
+// void run_matmat(float* A, float* B, float* C, int n)
+// {
 
-}
+// }
 
 void print_matrix(float* A, int n)
 {
     for (int i = 0; i < n; ++i)
     {
         for (int j = 0; j < n; ++j)
-            printf("%d ", A[i*n + j]);
+            printf("%.1f ", A[i*n + j]);
         printf("\n");
     }
 }
