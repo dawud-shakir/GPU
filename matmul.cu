@@ -14,37 +14,37 @@
   } while (0)
 
 
-// __global__ void matmul(float* A, float* B, float* C, int n)
-// {
-//     int col = threadIdx.x + blockIdx.x * blockDim.x;
-//     int row = threadIdx.y + blockIdx.y * blockDim.y;
-
-//     if (col >= n || row >= n)
-//         return;
-
-//     float val = 0;  // Register variable
-//     val = C[row*n + col];
-//     for (int k = 0; k < n; ++k)
-//         val += A[row*n + k] * B[k*n + col];
-//     C[row*n + col] = val;
-// }
-
-// Prof's
-__global__ void matrixMultKernel(int n, float* A, float* B, float* C)
+__global__ void gpu_matmul(float* A, float* B, float* C, int n)
 {
-    int col = blockIdx.x * blockDim.x + threadIdx.x;
-    int row = blockIdx.y * blockDim.y + threadIdx.y;
-    float val = 0;
+    int col = threadIdx.x + blockIdx.x * blockDim.x;
+    int row = threadIdx.y + blockIdx.y * blockDim.y;
 
-    if (row < n && col < n) {
-        val = C[row * n + col];
-        for (int k = 0; k < n; k++)
-            val += A[row * n + k] * B[k * n + col];
-        C[row * n + col] = val;
-    }
+    if (col >= n || row >= n)
+        return;
+
+    float val = 0;  // Register variable
+    val = C[row*n + col];
+    for (int k = 0; k < n; ++k)
+        val += A[row*n + k] * B[k*n + col];
+    C[row*n + col] = val;
 }
 
-void matmat(int n, float* A, float* B, float* C)
+// Prof's
+// __global__ void gpu_matmul(int n, float* A, float* B, float* C)
+// {
+//     int col = blockIdx.x * blockDim.x + threadIdx.x;
+//     int row = blockIdx.y * blockDim.y + threadIdx.y;
+//     float val = 0;
+
+//     if (row < n && col < n) {
+//         val = C[row * n + col];
+//         for (int k = 0; k < n; k++)
+//             val += A[row * n + k] * B[k * n + col];
+//         C[row * n + col] = val;
+//     }
+// }
+
+void cpu_matmul(int n, float* A, float* B, float* C)
 {
     float val;
     for (int row = 0; row < n; row++) {
@@ -107,7 +107,7 @@ int main(int argc, char* argv[])
     int blocks = (n + threads - 1) / threads;   // integer ceil
 
     // Warmup
-    matmul<<<blocks, threads>>>(A, B, C, n);
+    gpu_matmul<<<blocks, threads>>>(A, B, C, n);
     CUDA_CHECK(cudaGetLastError());
     CUDA_CHECK(cudaDeviceSynchronize());
 
@@ -119,9 +119,9 @@ int main(int argc, char* argv[])
     CUDA_CHECK(cudaEventRecord(start));
     
     for (int it = 0; it < iters; ++it) {
-        CHECK_CUDA(cudaMemset(C, 0, bytes));
+        CUDA_CHECK(cudaMemset(C, 0, bytes));
         // Launch kernel
-        matmul<<<blocks, threads>>>(A, B, C, n);
+        gpu_matmul<<<blocks, threads>>>(A, B, C, n);
     }
 
     CUDA_CHECK(cudaGetLastError());
@@ -136,7 +136,7 @@ int main(int argc, char* argv[])
     printf("Avg kernel time: %.4f ms (over %d iters)\n", ms_per, iters);
 
     // Perform computation serially on CPU for comparison
-    matrixMult(A, B, comparisonResult, n);
+    cpu_matmul(A, B, comparisonResult, n);
 
     // Confirm that CPU and GPU got the same answer
     double gpu_sum = sum(C, n);
