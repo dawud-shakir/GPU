@@ -1,5 +1,6 @@
 #include <stdio.h>      // printf
 #include <stdlib.h>     // atoi
+#include <string.h>     // memset
 #include <cuda.h>
 // #include <cuda_runtime_api.h>
 
@@ -140,6 +141,7 @@ int main(int argc, char* argv[])
     printf("Avg kernel time: %.4f ms (over %d iters)\n", ms_per, iters);
 
     // Perform computation serially on CPU for comparison
+    memset(comparisonResult, 0, bytes);
     matrixMult(A, B, comparisonResult, n);
 
     // Confirm that CPU and GPU got the same answer
