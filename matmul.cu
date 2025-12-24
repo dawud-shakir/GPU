@@ -38,7 +38,8 @@ __global__ void matmul(float* A, float* B, float* C, int n)
     if (col >= n || row >= n)
         return;
 
-    float val = 0;
+    float val = 0;  // Register variable
+    val = C[row*n + col];
     for (int k = 0; k < n; ++k)
         val += A[row*n + k] * B[k*n + col];
     C[row*n + col] = val;
@@ -122,6 +123,7 @@ int main(int argc, char* argv[])
     CUDA_CHECK(cudaEventRecord(start));
     
     for (int it = 0; it < iters; ++it) {
+        CHECK_CUDA(cudaMemset(C, 0, bytes));
         // Launch kernel
         matmul<<<blocks, threads>>>(A, B, C, n);
     }
@@ -144,6 +146,10 @@ int main(int argc, char* argv[])
     double gpu_sum = sum(C, n);
     double cpu_sum = sum(comparisonResult, n);
     printf("GPU: %.0f, CPU: %.0f\n", gpu_sum, cpu_sum);
+
+    // n=4 output: GPU: 16, CPU 64
+    // n=256 output: GPU: 392704, CPU: 67108864
+
 
     CUDA_CHECK(cudaFree(A));
     CUDA_CHECK(cudaFree(B));
