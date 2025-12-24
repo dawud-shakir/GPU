@@ -56,12 +56,11 @@ void cpu_matmul(float* A, float* B, float* C, int n)
         }
     }
 }
-double sum(float* C, int n)
+float sum(float* C, int n)
 {
-    double s = 0;
-    for (int i = 0; i < n; i++)
-        for (int j = 0; j < n; j++)
-            s += C[i*n+j];
+    float s = 0;
+    for (int i = 0; i < n * n; ++i)
+        s += C[i];
     return s;
 }
 
