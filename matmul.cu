@@ -56,9 +56,9 @@ void cpu_matmul(float* A, float* B, float* C, int n)
         }
     }
 }
-float sum(float* C, int n)
+double sum(float* C, int n)
 {
-    float s = 0;
+    double s = 0;
     for (int i = 0; i < n * n; ++i)
         s += C[i];
     return s;
@@ -96,10 +96,11 @@ int main(int argc, char* argv[])
         return 1;
     }
 
-    for (int i = 0; i < bytes; ++i)
+    for (int i = 0; i < n * n; ++i)
     {
-        A[i] = 2.0;
-        B[i] = 0.5;
+        A[i] = 2.0f;
+        B[i] = 0.5f;
+        cpu_C[i] = 0.0f;
     }
 
     int threads = 256;
