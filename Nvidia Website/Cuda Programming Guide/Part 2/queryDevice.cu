@@ -13,8 +13,14 @@ int main() {
     printf("Shared Memory per SM: %zu bytes\n", prop.sharedMemPerMultiprocessor);
     printf("Shared Memory per Block: %zu bytes\n", prop.sharedMemPerBlock);
 
+    // Shared Memory per SM: 65536 bytes
+    // Shared Memory per Block: 49152 bytes
+
     //cudaFuncSetCacheConfig()
 
+
+    printf("Registers Per Multiprocessor (SM): %d\n", prop.regsPerMultiprocessor);
+    printf("Registers Per Block: %d\n", prop.regsPerBlock);
 
     return 0;
 }
