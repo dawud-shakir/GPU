@@ -65,10 +65,10 @@ int main(int argc, char* argv[])
         B[i] = 0.5;
     }
 
-    printf("A:\n");
-    print_matrix(A, n);
-    printf("\nB:\n");
-    print_matrix(B, n);
+    // printf("A:\n");
+    // print_matrix(A, n);
+    // printf("\nB:\n");
+    // print_matrix(B, n);
 
     int threads = 256;
     int blocks = (n + threads - 1) / threads;   // integer ceil
