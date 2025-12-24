@@ -53,9 +53,9 @@ int main(int argc, char* argv[])
     int bytes = sizeof(float) * n * n;
     float *A, *B, *C;
 
-    CUDA_CHECK(cudaManagedMalloc(&A, bytes));
-    CUDA_CHECK(cudaManagedMalloc(&B, bytes));
-    CUDA_CHECK(cudaManagedMalloc(&C, bytes));
+    CUDA_CHECK(cudaMallocManaged(&A, bytes));
+    CUDA_CHECK(cudaMallocManaged(&B, bytes));
+    CUDA_CHECK(cudaMallocManaged(&C, bytes));
     
     CUDA_CHECK(cudaMemSet(C, 0, bytes));
 
