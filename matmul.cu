@@ -1,6 +1,7 @@
 #include <stdio.h>      // printf
 #include <stdlib.h>     // atoi
-#include <cuda.h>
+// #include <cuda.h>
+#include <cuda_runtime_api.h>
 
 #define CUDA_CHECK(call)                                                   \
   do {                                                                     \
