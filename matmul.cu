@@ -31,6 +31,16 @@ void run_matmat(float* A, float* B, float* C, int n)
 
 }
 
+void print_matrix(float* A, int n)
+{
+    for (int i = 0; i < n; ++i)
+    {
+        for (int j = 0; j < n; ++j)
+            printf("%d ", A[i*n + j]);
+        printf("\n");
+    }
+}
+
 int main(int argc, char* argv[])
 {
     if (argc < 2) {
@@ -53,6 +63,11 @@ int main(int argc, char* argv[])
         A[i] = 2.0;
         B[i] = 0.5;
     }
+
+    printf("A:\n");
+    print_matrix(A, n);
+    printf("\nB:\n");
+    print_matrix(B, n);
 
     CUDA_CHECK(cudaFree(A));
     CUDA_CHECK(cudaFree(B));
