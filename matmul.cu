@@ -14,34 +14,35 @@
   } while (0)
 
 
-//   __global__ void matmul(float* A, float* B, float* C, int n)
-// {
-//     int col = blockIdx.x*blockDim.x + threadIdx.x;
-//     int row = blockIdx.y*blockDim.y + threadIdx.y;
-//     float val = 0;
-
-//     if (row < n && col < n)
-//     {
-//         val = C[row*n+col];
-//         for (int k = 0; k < n; k++)
-//             val += A[row*n+k] * B[k*n+col];
-//         C[row*n+col] = val;
-//     }
-// }
-
-__global__ void matmul(float* A, float* B, float* C, int n)
+// Profs
+  __global__ void matmul(float* A, float* B, float* C, int n)
 {
-    int col = threadIdx.x + blockIdx.x * blockDim.x;
-    int row = threadIdx.y + blockIdx.y * blockDim.y;
+    int col = blockIdx.x*blockDim.x + threadIdx.x;
+    int row = blockIdx.y*blockDim.y + threadIdx.y;
+    float val = 0;
 
-    if (col >= n || row >= n)
-        return;
-
-    float sum = C[row*n + col];
-    for (int k = 0; k < n; ++k)
-        sum += A[row*n + k] * B[k*n + col];
-    C[row*n + col] = sum;
+    if (row < n && col < n)
+    {
+        val = C[row*n+col];
+        for (int k = 0; k < n; k++)
+            val += A[row*n+k] * B[k*n+col];
+        C[row*n+col] = val;
+    }
 }
+
+// __global__ void matmul(float* A, float* B, float* C, int n)
+// {
+//     int col = threadIdx.x + blockIdx.x * blockDim.x;
+//     int row = threadIdx.y + blockIdx.y * blockDim.y;
+
+//     if (col >= n || row >= n)
+//         return;
+
+//     float sum = C[row*n + col];
+//     for (int k = 0; k < n; ++k)
+//         sum += A[row*n + k] * B[k*n + col];
+//     C[row*n + col] = sum;
+// }
 
 void matrixMult(float* A, float* B, float* C, int n)
 {
