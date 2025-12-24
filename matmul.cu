@@ -92,11 +92,11 @@ int main(int argc, char* argv[])
 
     CUDA_CHECK(cudaGetLastError());
     CUDA_CHECK(cudaEventRecord(stop));
-    CUDA_CHECK(cudaEventSynchronize());
+    CUDA_CHECK(cudaEventSynchronize(stop));
 
     float ms = 0.0f;
     CUDA_CHECK(cudaEventElapsedTime(&ms, start, stop));
-    float ms_sec = ms / iters;
+    float ms_per = ms / iters;
 
     printf("n=%d, blocks=%d, threads=%d\n", n, blocks, threads);
     printf("Avg kernel time: %.4f ms (over %d iters)\n", ms_per, iters);
