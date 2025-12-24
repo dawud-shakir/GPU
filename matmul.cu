@@ -44,7 +44,7 @@ __global__ void gpu_matmul(float* A, float* B, float* C, int n)
 //     }
 // }
 
-void cpu_matmul(int n, float* A, float* B, float* C)
+void cpu_matmul(float* A, float* B, float* C, int n)
 {
     float val;
     for (int row = 0; row < n; row++) {
