@@ -27,10 +27,29 @@ __global__ void matmul(float* A, float* B, float* C, int n)
     C[row*n + col] = sum;
 }
 
-// void run_matmat(float* A, float* B, float* C, int n)
-// {
+void matrixMult(float* A, float* B, float* C, int n)
+{
+    float val;
+    for (int i = 0; i < n; i++)
+    {
+        for (int j = 0; j < n; j++)
+        {
+            val = 0;
+            for (int k = 0; k < n; k++)
+                val += A[i*n+k] * B[k*n+j];
+            C[i*n+j] = val;
+        }
+    }
+}
 
-// }
+double sum(float* C, int n)
+{
+    double s = 0;
+    for (int i = 0; i < n; i++)
+        for (int j = 0; j < n; j++)
+            s += C[i*n+j];
+    return s;
+}
 
 void print_matrix(float* A, int n)
 {
@@ -52,12 +71,12 @@ int main(int argc, char* argv[])
     int n = atoi(argv[1]);
     int bytes = sizeof(float) * n * n;
     float *A, *B, *C;
+    float *comparisonResult;
 
     CUDA_CHECK(cudaMallocManaged(&A, bytes));
     CUDA_CHECK(cudaMallocManaged(&B, bytes));
     CUDA_CHECK(cudaMallocManaged(&C, bytes));
-    
-    CUDA_CHECK(cudaMemset(C, 0, bytes));
+    comparisonResult = (float*)malloc(bytes);
 
     for (int i = 0; i < bytes; ++i)
     {
@@ -88,6 +107,7 @@ int main(int argc, char* argv[])
     for (int it = 0; it < iters; ++it) {
         // Launch kernel
         matmul<<<blocks, threads>>>(A, B, C, n);
+        CUDA_CHECK(cudaMemset(C, 0, bytes));
     }
 
     CUDA_CHECK(cudaGetLastError());
@@ -101,9 +121,18 @@ int main(int argc, char* argv[])
     printf("n=%d, blocks=%d, threads=%d\n", n, blocks, threads);
     printf("Avg kernel time: %.4f ms (over %d iters)\n", ms_per, iters);
 
+    // Perform computation serially on CPU for comparison
+    matrixMult(A, B, comparisonResult, n);
+
+    // Confirm that CPU and GPU got the same answer
+    double gpu_sum = sum(C, n);
+    double cpu_sum = sum(comparisonResult, n);
+    printf("GPU: %.0f, CPU: %.0f\n", gpu_sum, cpu_sum);
+
     CUDA_CHECK(cudaFree(A));
     CUDA_CHECK(cudaFree(B));
     CUDA_CHECK(cudaFree(C));
-    
+    free(comparisonResult);
+
     return 0;
 }
