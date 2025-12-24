@@ -14,52 +14,48 @@
   } while (0)
 
 
-// // Profs
-//   __global__ void matmul(float* A, float* B, float* C, int n)
+// __global__ void matmul(float* A, float* B, float* C, int n)
 // {
-//     int col = blockIdx.x*blockDim.x + threadIdx.x;
-//     int row = blockIdx.y*blockDim.y + threadIdx.y;
-//     float val = 0;
+//     int col = threadIdx.x + blockIdx.x * blockDim.x;
+//     int row = threadIdx.y + blockIdx.y * blockDim.y;
 
-//     if (row < n && col < n)
-//     {
-//         val = C[row*n+col];
-//         for (int k = 0; k < n; k++)
-//             val += A[row*n+k] * B[k*n+col];
-//         C[row*n+col] = val;
-//     }
+//     if (col >= n || row >= n)
+//         return;
+
+//     float val = 0;  // Register variable
+//     val = C[row*n + col];
+//     for (int k = 0; k < n; ++k)
+//         val += A[row*n + k] * B[k*n + col];
+//     C[row*n + col] = val;
 // }
 
-__global__ void matmul(float* A, float* B, float* C, int n)
+// Prof's
+__global__ void matrixMultKernel(int n, float* A, float* B, float* C)
 {
-    int col = threadIdx.x + blockIdx.x * blockDim.x;
-    int row = threadIdx.y + blockIdx.y * blockDim.y;
+    int col = blockIdx.x * blockDim.x + threadIdx.x;
+    int row = blockIdx.y * blockDim.y + threadIdx.y;
+    float val = 0;
 
-    if (col >= n || row >= n)
-        return;
-
-    float val = 0;  // Register variable
-    val = C[row*n + col];
-    for (int k = 0; k < n; ++k)
-        val += A[row*n + k] * B[k*n + col];
-    C[row*n + col] = val;
-}
-
-void matrixMult(float* A, float* B, float* C, int n)
-{
-    float val;
-    for (int i = 0; i < n; i++)
-    {
-        for (int j = 0; j < n; j++)
-        {
-            val = 0;
-            for (int k = 0; k < n; k++)
-                val += A[i*n+k] * B[k*n+j];
-            C[i*n+j] = val;
-        }
+    if (row < n && col < n) {
+        val = C[row * n + col];
+        for (int k = 0; k < n; k++)
+            val += A[row * n + k] * B[k * n + col];
+        C[row * n + col] = val;
     }
 }
 
+void matmat(int n, float* A, float* B, float* C)
+{
+    float val;
+    for (int row = 0; row < n; row++) {
+        for (int col = 0; col < n; col++) {
+            val = C[row * n + col];
+            for (int k = 0; k < n; k++)
+                val += A[row * n + k] * B[k * n + col];
+            C[row * n + col] = val;
+        }
+    }
+}
 double sum(float* C, int n)
 {
     double s = 0;
