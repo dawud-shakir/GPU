@@ -84,13 +84,18 @@ int main(int argc, char* argv[])
 
     int n = atoi(argv[1]);
     int bytes = sizeof(float) * n * n;
-    float *A, *B, *C;
-    float *comparisonResult;
+    float *A, *B, *gpu_C;
+    float *cpu_C;
 
     CUDA_CHECK(cudaMallocManaged(&A, bytes));
     CUDA_CHECK(cudaMallocManaged(&B, bytes));
-    CUDA_CHECK(cudaMallocManaged(&C, bytes));
-    comparisonResult = (float*)malloc(bytes);
+    CUDA_CHECK(cudaMallocManaged(&gpu_C, bytes));
+
+    cpu_C = (float*)malloc(bytes);
+    if (0 == cpu_C) {
+        fprintf(stderr, "malloc error\n");
+        return 1;
+    }
 
     for (int i = 0; i < bytes; ++i)
     {
@@ -98,16 +103,11 @@ int main(int argc, char* argv[])
         B[i] = 0.5;
     }
 
-    // printf("A:\n");
-    // print_matrix(A, n);
-    // printf("\nB:\n");
-    // print_matrix(B, n);
-
     int threads = 256;
     int blocks = (n + threads - 1) / threads;   // integer ceil
 
     // Warmup
-    gpu_matmul<<<blocks, threads>>>(A, B, C, n);
+    gpu_matmul<<<blocks, threads>>>(A, B, gpu_C, n);
     CUDA_CHECK(cudaGetLastError());
     CUDA_CHECK(cudaDeviceSynchronize());
 
@@ -119,9 +119,9 @@ int main(int argc, char* argv[])
     CUDA_CHECK(cudaEventRecord(start));
     
     for (int it = 0; it < iters; ++it) {
-        CUDA_CHECK(cudaMemset(C, 0, bytes));
+        CUDA_CHECK(cudaMemset(gpu_C, 0, bytes));
         // Launch kernel
-        gpu_matmul<<<blocks, threads>>>(A, B, C, n);
+        gpu_matmul<<<blocks, threads>>>(A, B, gpu_C, n);
     }
 
     CUDA_CHECK(cudaGetLastError());
@@ -136,21 +136,26 @@ int main(int argc, char* argv[])
     printf("Avg kernel time: %.4f ms (over %d iters)\n", ms_per, iters);
 
     // Perform computation serially on CPU for comparison
-    cpu_matmul(A, B, comparisonResult, n);
+    cpu_matmul(A, B, cpu_C, n);
 
-    // Confirm that CPU and GPU got the same answer
-    double gpu_sum = sum(C, n);
-    double cpu_sum = sum(comparisonResult, n);
+    // Confirm that GPU and CPU got the same answer
+    double gpu_sum = sum(gpu_C, n);
+    double cpu_sum = sum(cpu_C, n);
     printf("GPU: %.0f, CPU: %.0f\n", gpu_sum, cpu_sum);
 
     // n=4 output: GPU: 16, CPU 64
     // n=256 output: GPU: 392704, CPU: 67108864
 
+    if (n <= 16)
+    {
+        printf("cpu_C:\n");
+        print_matrix(cpu_C, n);
+    }
 
     CUDA_CHECK(cudaFree(A));
     CUDA_CHECK(cudaFree(B));
-    CUDA_CHECK(cudaFree(C));
-    free(comparisonResult);
+    CUDA_CHECK(cudaFree(gpu_C));
+    free(cpu_C);
 
     return 0;
 }
