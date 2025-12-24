@@ -45,7 +45,7 @@ void print_matrix(float* A, int n)
 int main(int argc, char* argv[])
 {
     if (argc < 2) {
-        printf("Usage: %s n", argv[0]);
+        printf("Usage: %s <n>\n", argv[0]);
         return 1;
     }
 
@@ -70,10 +70,40 @@ int main(int argc, char* argv[])
     printf("\nB:\n");
     print_matrix(B, n);
 
+    int threads = 256;
+    int blocks = (n + threads - 1) / threads;   // integer ceil
+
+    // Warmup
+    matmul<<<blocks, threads>>>(A, B, C, n);
+    CUDA_CHECK(cudaGetLastError());
+    CUDA_CHECK(cudaDeviceSynchronize());
+
+    // Timed runs
+    int iters = 50;
+    cudaEvent_t start, stop;
+    CUDA_CHECK(cudaEventCreate(&start));
+    CUDA_CHECK(cudaEventCreate(&stop));
+    CUDA_CHECK(cudaEventRecord(start));
+    
+    for (int it = 0; it < iters; ++it) {
+        // Launch kernel
+        matmul<<<blocks, threads>>>(A, B, C, n);
+    }
+
+    CUDA_CHECK(cudaGetLastError());
+    CUDA_CHECK(cudaEventRecord(stop));
+    CUDA_CHECK(cudaEventSynchronize());
+
+    float ms = 0.0f;
+    CUDA_CHECK(cudaEventElapsedTime(&ms, start, stop));
+    float ms_sec = ms / iters;
+
+    printf("n=%d, blocks=%d, threads=%d\n", n, blocks, threads);
+    printf("Avg kernel time: %.4f ms (over %d iters)\n", ms_per, iters);
+
     CUDA_CHECK(cudaFree(A));
     CUDA_CHECK(cudaFree(B));
     CUDA_CHECK(cudaFree(C));
     
-
     return 0;
 }
