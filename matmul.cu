@@ -57,7 +57,7 @@ int main(int argc, char* argv[])
     CUDA_CHECK(cudaMallocManaged(&B, bytes));
     CUDA_CHECK(cudaMallocManaged(&C, bytes));
     
-    CUDA_CHECK(cudaMemSet(C, 0, bytes));
+    CUDA_CHECK(cudaMemset(C, 0, bytes));
 
     for (int i = 0; i < bytes; ++i)
     {
