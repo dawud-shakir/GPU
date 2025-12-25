@@ -22,7 +22,7 @@ __global__ void gpu_matmul(float* A, float* B, float* C, int n)
     if (col >= n || row >= n)
         return;
 
-    float val = 0.0f; //C[row*n + col];  // Register variable
+    float val = 0.0f;  // registered
     for (int k = 0; k < n; ++k)
         val += A[row*n + k] * B[k*n + col];
     C[row*n + col] = val;
@@ -43,7 +43,38 @@ __global__ void gpu_matmul(float* A, float* B, float* C, int n)
 //     }
 // }
 
+#define TILE_SIZE
 
+__global__ void gpu_matmul2(float* A, float* B, float* C, int n)
+{
+    __shared__ float A_shared[TILE_SIZE][TILE_SIZE];
+    __shared__ float B_shared[TILE_SIZE][TILE_SIZE];
+
+    int thread_y    = threadIdx.y;
+    int thread_x    = threadIdx.x;
+    
+    int block_y     = blockIdx.y;
+    int block_x     = blockIdx.x;
+
+    int row = thread_y + block_y * blockDim.y;
+    int col = thread_x + block_x * blockDim.x;
+
+    if (row >= n || col >= n)
+        return;
+
+    float val = 0.0f;  // registered
+    for (int i = 0; i < n / TILE_SIZE; ++i)
+    {
+        A_shared[y_thread][x_thread] = A[row*n + i*TILE_SIZE + thread_x];
+        B_shared[y_thread][x_thread] = B[(i*TILE_SIZE + thread_y)*n + col];
+        __syncthreads();    // wait for all threads before reading shared memory
+
+        for (int k = 0; k < TILE_SIZE; ++k)
+            val += A_shared[thread_y][k] * B_shared[k][thread_x];
+        __syncthreads();
+    }
+    C[row*n + col] = val;
+}
 
 void cpu_matmul(float* A, float* B, float* C, int n)
 {
