@@ -168,19 +168,11 @@ int main(int argc, char* argv[])
     printf("Checksum\nGPU: %.0f, CPU: %.0f\n", gpu_sum, cpu_sum);
 
     if (approximatelyEqual(gpu_C, cpu_C, n*n))
-        printf("Unified Memory: CPU and GPU answers match\n");
+        printf("Unified Memory: GPU and CPU answers match\n");
     else
-        printf("Unified Memory: Error - CPU and GPU answers do not match\n");
+        printf("Unified Memory: Error - GPU and CPU answers do not match\n");
 
-    // n=4 output: GPU: 16, CPU 64
-    // n=256 output: GPU: 65536, CPU: 16777216
-
-    // if (n <= 16)
-    // {
-    //     printf("cpu_C:\n");
-    //     print_matrix(cpu_C, n);
-    // }
-
+    // Clean Up
     CUDA_CHECK(cudaFree(A));
     CUDA_CHECK(cudaFree(B));
     CUDA_CHECK(cudaFree(gpu_C));
