@@ -207,9 +207,9 @@ int main(int argc, char* argv[])
     printf("Checksum\nGPU: %.0f, CPU: %.0f\n", gpu_sum, cpu_sum);
 
     if (approximatelyEqual(gpu_C, cpu_C, n*n))
-        printf("Unified Memory: GPU and CPU answers match\n");
+        printf("Tiling: GPU and CPU answers match\n");
     else
-        printf("Unified Memory: Error - GPU and CPU answers do not match\n");
+        printf("Tiling: Error - GPU and CPU answers do not match\n");
 
     // Clean Up
     CUDA_CHECK(cudaFree(A));
