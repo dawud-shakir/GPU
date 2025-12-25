@@ -28,7 +28,7 @@
 //     C[row*n + col] = val;
 // }
 
-Prof's
+// Prof's
 __global__ void gpu_matmul(int n, float* A, float* B, float* C)
 {
     int col = blockIdx.x * blockDim.x + threadIdx.x;
