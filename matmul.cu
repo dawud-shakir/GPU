@@ -66,8 +66,8 @@ __device__ __inline__ void gpu_matmul(float* A, float* B, float* C, int n)
 
 __global__ void gpu_matmul_tiled_nonsquare(float* A, float* B, float* C, int n)
 {
-    __shared__ float A_shared[THREADS_PER_BLOCK_Y][THREADS_PER_BLOCK_X];
-    __shared__ float B_shared[THREADS_PER_BLOCK_Y][THREADS_PER_BLOCK_X];
+    __shared__ float A_shared[TILE_SIZE][TILE_SIZE];
+    __shared__ float B_shared[TILE_SIZE][TILE_SIZE];
 
     int ty    = threadIdx.y;
     int tx    = threadIdx.x;
