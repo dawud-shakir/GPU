@@ -69,7 +69,7 @@ bool approximatelyEqual(float* A, float* B, int n, float epsilon=0.00001)
     {
         if (fabs(A[i] - B[i]) > epsilon)
         {
-            printf("Index %d mismatch: %f != %f", i, A[i], B[i]);
+            printf("Index %d mismatch: %f != %f\n", i, A[i], B[i]);
             return false;
         }
     }
@@ -164,7 +164,8 @@ int main(int argc, char* argv[])
 
     printf("GPU: %f, CPU: %f\n", gpu_sum, cpu_sum);
 
-    gpu_C[0] = -3;
+    int change_this_index = n + 2 - 1 / 2;
+    cpu_C[change_this_index] = -3;
         // Confirm that CPU and GPU got the same answer
     if(approximatelyEqual(gpu_C, cpu_C, n))
     {
