@@ -45,7 +45,7 @@ __global__ void gpu_matmul(float* A, float* B, float* C, int n)
 
 #define TILE_SIZE
 
-__global__ void gpu_matmul2(float* A, float* B, float* C, int n)
+__global__ void gpu_matmul_tiled(float* A, float* B, float* C, int n)
 {
     __shared__ float A_shared[TILE_SIZE][TILE_SIZE];
     __shared__ float B_shared[TILE_SIZE][TILE_SIZE];
@@ -154,7 +154,7 @@ int main(int argc, char* argv[])
                  (n + blockDim.y - 1) / blockDim.y);
 
     // Warmup
-    gpu_matmul<<<gridDim, blockDim>>>(A, B, gpu_C, n);
+    gpu_matmul_tiled<<<gridDim, blockDim>>>(A, B, gpu_C, n);
     CUDA_CHECK(cudaGetLastError());
     CUDA_CHECK(cudaDeviceSynchronize());
 
@@ -168,7 +168,7 @@ int main(int argc, char* argv[])
     for (int it = 0; it < iters; ++it) {
         CUDA_CHECK(cudaMemset(gpu_C, 0, bytes));
         // Launch kernel
-        gpu_matmul<<<gridDim, blockDim>>>(A, B, gpu_C, n);
+        gpu_matmul_tiled<<<gridDim, blockDim>>>(A, B, gpu_C, n);
     }
 
     CUDA_CHECK(cudaGetLastError());
