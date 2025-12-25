@@ -166,7 +166,7 @@ int main(int argc, char* argv[])
 
     int change_this_index = n + 2 - 1 / 2;
     printf("Changing index: %d\n", change_this_index);
-    cpu_C[0] = -3;
+    gpu_C[change_this_index] = -3;
     printf("gpu_C[change_this_index]=%f, cpu_C[change_this_index]=%f\n", gpu_C[change_this_index], cpu_C[change_this_index]);
         // Confirm that CPU and GPU got the same answer
     if (approximatelyEqual(gpu_C, cpu_C, n))
