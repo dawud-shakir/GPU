@@ -164,6 +164,7 @@ int main(int argc, char* argv[])
 
     printf("GPU: %f, CPU: %f\n", gpu_sum, cpu_sum);
 
+    gpu_C[n*int(0.5*n)] = 3;
         // Confirm that CPU and GPU got the same answer
     if(approximatelyEqual(gpu_C, cpu_C, n))
     {
