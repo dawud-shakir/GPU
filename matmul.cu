@@ -43,7 +43,13 @@ __global__ void gpu_matmul(float* A, float* B, float* C, int n)
 //     }
 // }
 
-#define TILE_SIZE
+#ifndef TILE_SIZE
+#define TILE_SIZE 32
+#endif
+
+#if TILE_SIZE <= 0 || TILE_SIZE > 1024
+#error "TILE_SIZE must be in (0,1024]"
+#endif
 
 __global__ void gpu_matmul_tiled(float* A, float* B, float* C, int n)
 {
@@ -65,8 +71,8 @@ __global__ void gpu_matmul_tiled(float* A, float* B, float* C, int n)
     float val = 0.0f;  // registered
     for (int i = 0; i < n / TILE_SIZE; ++i)
     {
-        A_shared[y_thread][x_thread] = A[row*n + i*TILE_SIZE + thread_x];
-        B_shared[y_thread][x_thread] = B[(i*TILE_SIZE + thread_y)*n + col];
+        A_shared[thread_y][thread_x] = A[row*n + i*TILE_SIZE + thread_x];
+        B_shared[thread_y][thread_x] = B[(i*TILE_SIZE + thread_y)*n + col];
         __syncthreads();    // wait for all threads before reading shared memory
 
         for (int k = 0; k < TILE_SIZE; ++k)
