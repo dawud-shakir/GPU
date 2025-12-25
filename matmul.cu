@@ -115,10 +115,8 @@ int main(int argc, char* argv[])
         B[i] = 0.5f;
     }
 
-    int threads = 256;
-    int blocks = (n + threads - 1) / threads;   // integer ceil
-
-    dim3 blockDim(16, 16);
+    int threads = 32;   // warps are 32 threads
+    dim3 blockDim(threads, threads);
     dim3 gridDim((n + blockDim.x - 1) / blockDim.x,
                  (n + blockDim.y - 1) / blockDim.y);
 
@@ -166,21 +164,13 @@ int main(int argc, char* argv[])
         cpu_sum += cpu_C[i];
     }
 
-    printf("GPU: %f, CPU: %f\n", gpu_sum, cpu_sum);
 
-    // int change_this_index = ((n*n) + 2 - 1) / 2;
-    // printf("Changing index: %d\n", change_this_index);
-    // gpu_C[change_this_index] = -3;
-    // printf("gpu_C[change_this_index]=%f, cpu_C[change_this_index]=%f\n", gpu_C[change_this_index], cpu_C[change_this_index]);
-        // Confirm that CPU and GPU got the same answer
+    printf("Checksum\nGPU: %.0f, CPU: %.0f\n", gpu_sum, cpu_sum);
+
     if (approximatelyEqual(gpu_C, cpu_C, n*n))
-    {
         printf("Unified Memory: CPU and GPU answers match\n");
-    }
     else
-    {
         printf("Unified Memory: Error - CPU and GPU answers do not match\n");
-    }
 
     // n=4 output: GPU: 16, CPU 64
     // n=256 output: GPU: 65536, CPU: 16777216
