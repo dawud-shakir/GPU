@@ -156,7 +156,7 @@ int main(int argc, char* argv[])
     printf("GPU: %.0f, CPU: %.0f\n", gpu_sum, cpu_sum);
 
         // Confirm that CPU and GPU got the same answer
-    if(approximatelyEqual(C, comparisonResult, vectorLength))
+    if(approximatelyEqual(gpu_C, cpu_C, n))
     {
         printf("Unified Memory: CPU and GPU answers match\n");
     }
