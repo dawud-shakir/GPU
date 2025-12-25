@@ -57,17 +57,17 @@ void cpu_matmul(float* A, float* B, float* C, int n)
 }
 double sum(float* C, int n)
 {
-    double s = 0;
+    double s = 0.0;
     for (int i = 0; i < n * n; ++i)
         s += C[i];
     return s;
 }
 
-bool approximatelyEqual(float* A, float* B, int length, float epsilon=0.00001)
+bool approximatelyEqual(float* A, float* B, int n, float epsilon=0.00001)
 {
-    for(int i=0; i<length; i++)
+    for (int i = 0; i < n; ++i)
     {
-        if(fabs(A[i] -B[i]) > epsilon)
+        if (fabs(A[i] - B[i]) > epsilon)
         {
             printf("Index %d mismatch: %f != %f", i, A[i], B[i]);
             return false;
@@ -151,9 +151,18 @@ int main(int argc, char* argv[])
     cpu_matmul(A, B, cpu_C, n);
 
     // Confirm that GPU and CPU got the same answer
-    double gpu_sum = sum(gpu_C, n);
-    double cpu_sum = sum(cpu_C, n);
-    printf("GPU: %.0f, CPU: %.0f\n", gpu_sum, cpu_sum);
+    // double gpu_sum = sum(gpu_C, n);
+    // double cpu_sum = sum(cpu_C, n);
+
+    float gpu_sum = 0.0;
+    float cpu_sum = 0.0;
+    for (int i = 0; i < n * n; ++i)
+    {
+        gpu_sum += gpu_C[i];
+        cpu_sum += cpu_C[i];
+    }
+
+    printf("GPU: %f, CPU: %f\n", gpu_sum, cpu_sum);
 
         // Confirm that CPU and GPU got the same answer
     if(approximatelyEqual(gpu_C, cpu_C, n))
