@@ -164,7 +164,7 @@ int main(int argc, char* argv[])
 
     printf("GPU: %f, CPU: %f\n", gpu_sum, cpu_sum);
 
-    int change_this_index = n + 2 - 1 / 2;
+    int change_this_index = ((n*n) + 2 - 1) / 2;
     printf("Changing index: %d\n", change_this_index);
     gpu_C[change_this_index] = -3;
     printf("gpu_C[change_this_index]=%f, cpu_C[change_this_index]=%f\n", gpu_C[change_this_index], cpu_C[change_this_index]);
