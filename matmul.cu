@@ -63,6 +63,19 @@ double sum(float* C, int n)
     return s;
 }
 
+bool approximatelyEqual(float* A, float* B, int length, float epsilon=0.00001)
+{
+    for(int i=0; i<length; i++)
+    {
+        if(fabs(A[i] -B[i]) > epsilon)
+        {
+            printf("Index %d mismatch: %f != %f", i, A[i], B[i]);
+            return false;
+        }
+    }
+    return true;
+}
+
 void print_matrix(float* A, int n)
 {
     for (int i = 0; i < n; ++i)
@@ -142,14 +155,24 @@ int main(int argc, char* argv[])
     double cpu_sum = sum(cpu_C, n);
     printf("GPU: %.0f, CPU: %.0f\n", gpu_sum, cpu_sum);
 
-    // n=4 output: GPU: 16, CPU 64
-    // n=256 output: GPU: 392704, CPU: 67108864
-
-    if (n <= 16)
+        // Confirm that CPU and GPU got the same answer
+    if(approximatelyEqual(C, comparisonResult, vectorLength))
     {
-        printf("cpu_C:\n");
-        print_matrix(cpu_C, n);
+        printf("Unified Memory: CPU and GPU answers match\n");
     }
+    else
+    {
+        printf("Unified Memory: Error - CPU and GPU answers do not match\n");
+    }
+
+    // n=4 output: GPU: 16, CPU 64
+    // n=256 output: GPU: 65536, CPU: 16777216
+
+    // if (n <= 16)
+    // {
+    //     printf("cpu_C:\n");
+    //     print_matrix(cpu_C, n);
+    // }
 
     CUDA_CHECK(cudaFree(A));
     CUDA_CHECK(cudaFree(B));
