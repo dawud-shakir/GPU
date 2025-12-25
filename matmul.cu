@@ -118,8 +118,12 @@ int main(int argc, char* argv[])
     int threads = 256;
     int blocks = (n + threads - 1) / threads;   // integer ceil
 
+    dim3 blockDim(16, 16);
+    dim3 gridDim((n + blockDim.x - 1) / blockDim.x,
+                 (n + blockDim.y - 1) / blockDim.y);
+
     // Warmup
-    gpu_matmul<<<blocks, threads>>>(A, B, gpu_C, n);
+    gpu_matmul<<<gridDim, blockDim>>>(A, B, gpu_C, n);
     CUDA_CHECK(cudaGetLastError());
     CUDA_CHECK(cudaDeviceSynchronize());
 
@@ -133,7 +137,7 @@ int main(int argc, char* argv[])
     for (int it = 0; it < iters; ++it) {
         CUDA_CHECK(cudaMemset(gpu_C, 0, bytes));
         // Launch kernel
-        gpu_matmul<<<blocks, threads>>>(A, B, gpu_C, n);
+        gpu_matmul<<<gridDim, blockDim>>>(A, B, gpu_C, n);
     }
 
     CUDA_CHECK(cudaGetLastError());
@@ -144,7 +148,7 @@ int main(int argc, char* argv[])
     CUDA_CHECK(cudaEventElapsedTime(&ms, start, stop));
     float ms_per = ms / iters;
 
-    printf("n=%d, blocks=%d, threads=%d\n", n, blocks, threads);
+    printf("n=%d, blocks=(%d,%d), threads=(%d,%d)\n", n, gridDim.x, gridDim.y, blockDim.x, blockDim.y);
     printf("Avg kernel time: %.4f ms (over %d iters)\n", ms_per, iters);
 
     // Perform computation serially on CPU for comparison
