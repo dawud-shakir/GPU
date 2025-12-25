@@ -22,7 +22,7 @@ __global__ void gpu_matmul(float* A, float* B, float* C, int n)
     if (col >= n || row >= n)
         return;
 
-    float val = 0; //C[row*n + col];  // Register variable
+    float val = 0.0f; //C[row*n + col];  // Register variable
     for (int k = 0; k < n; ++k)
         val += A[row*n + k] * B[k*n + col];
     C[row*n + col] = val;
