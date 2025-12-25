@@ -165,6 +165,7 @@ int main(int argc, char* argv[])
     printf("GPU: %f, CPU: %f\n", gpu_sum, cpu_sum);
 
     int change_this_index = n + 2 - 1 / 2;
+    printf("Changing index: %d\n", change_this_index);
     cpu_C[change_this_index] = -3;
         // Confirm that CPU and GPU got the same answer
     if(approximatelyEqual(gpu_C, cpu_C, n))
