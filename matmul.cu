@@ -75,6 +75,13 @@ __global__ void gpu_matmul_tiled_nonsquare(float* A, float* B, float* C, int n)
     const int row = ty + blockIdx.y * blockDim.y;
     const int col = tx + blockIdx.x * blockDim.x;
 
+    if (n % TILE_SIZE != 0)
+    {
+        // Use the regular matmul when n is smaller than the tile.
+        gpu_matmul(A, B, C, n);
+        return;
+    }
+    
     bool active = (row >= n || col >= n);   // possible deadlock if all threads don't reach __syncthreads() 
     // if (row >= n || col >= n)
     //     return;
