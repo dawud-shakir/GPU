@@ -49,7 +49,7 @@ __device__ __inline__ void gpu_matmul(float* A, float* B, float* C, int n)
 #endif
 
 #if TILE_SIZE <= 0 || (TILE_SIZE * TILESIZE) > 1024
-#error "THREADS_PER_BLOCK (TILE_SIZE * TILESIZE) must be in (0,1024]"
+#error "THREADS_PER_BLOCK (TILE_SIZE * TILE_SIZE) must be in (0,1024]"
 #endif
 
 // #ifndef THREADS_PER_BLOCK_X
@@ -75,24 +75,9 @@ __global__ void gpu_matmul_tiled_nonsquare(float* A, float* B, float* C, int n)
     const int row = ty + blockIdx.y * blockDim.y;
     const int col = tx + blockIdx.x * blockDim.x;
 
-    if (row >= n || col >= n)
-        return;
-
-    // if (n < TILE_SIZE)
-    // {
-    //     // Use the regular matmul when n is smaller than the tile.
-    //     gpu_matmul(A, B, C, n);
+    bool active = (row >= n || col >= n);   // possible deadlock if all threads don't reach __syncthreads() 
+    // if (row >= n || col >= n)
     //     return;
-    // }
-
-    // if (n % TILE_SIZE != 0)
-    // {
-    //     // For simplicity, this kernel assumes n is a multiple of TILE_SIZE
-    //     // In practice, you would handle the boundary conditions here
-
-    //     // Here's a more efficient way would involve padding or conditional loading
-
-    // }
 
     float val = 0.0f;  // registered
     int n_tiles = (n + TILE_SIZE - 1) / TILE_SIZE;
@@ -110,7 +95,8 @@ __global__ void gpu_matmul_tiled_nonsquare(float* A, float* B, float* C, int n)
             val += A_shared[ty][k] * B_shared[k][tx];
         __syncthreads();
     }
-    C[row*n + col] = val;
+    if (active)
+        C[row*n + col] = val;
 }
 
 __global__ void gpu_matmul_tiled(float* A, float* B, float* C, int n)
