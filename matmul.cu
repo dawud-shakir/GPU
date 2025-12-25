@@ -14,34 +14,36 @@
   } while (0)
 
 
-// __global__ void gpu_matmul(float* A, float* B, float* C, int n)
-// {
-//     int col = threadIdx.x + blockIdx.x * blockDim.x;
-//     int row = threadIdx.y + blockIdx.y * blockDim.y;
-
-//     if (col >= n || row >= n)
-//         return;
-
-//     float val = 0.0f; //C[row*n + col];  // Register variable
-//     for (int k = 0; k < n; ++k)
-//         val += A[row*n + k] * B[k*n + col];
-//     C[row*n + col] = val;
-// }
-
-// Prof's
 __global__ void gpu_matmul(float* A, float* B, float* C, int n)
 {
-    int col = blockIdx.x * blockDim.x + threadIdx.x;
-    int row = blockIdx.y * blockDim.y + threadIdx.y;
-    float val = 0;
+    int col = threadIdx.x + blockIdx.x * blockDim.x;
+    int row = threadIdx.y + blockIdx.y * blockDim.y;
 
-    if (row < n && col < n) {
-        val = C[row * n + col];
-        for (int k = 0; k < n; k++)
-            val += A[row * n + k] * B[k * n + col];
-        C[row * n + col] = val;
-    }
+    if (col >= n || row >= n)
+        return;
+
+    float val = 0.0f; //C[row*n + col];  // Register variable
+    for (int k = 0; k < n; ++k)
+        val += A[row*n + k] * B[k*n + col];
+    C[row*n + col] = val;
 }
+
+// // Prof's
+// __global__ void gpu_matmul(float* A, float* B, float* C, int n)
+// {
+//     int col = blockIdx.x * blockDim.x + threadIdx.x;
+//     int row = blockIdx.y * blockDim.y + threadIdx.y;
+//     float val = 0;
+
+//     if (row < n && col < n) {
+//         val = C[row * n + col];
+//         for (int k = 0; k < n; k++)
+//             val += A[row * n + k] * B[k * n + col];
+//         C[row * n + col] = val;
+//     }
+// }
+
+
 
 void cpu_matmul(float* A, float* B, float* C, int n)
 {
