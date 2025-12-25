@@ -44,32 +44,92 @@ __device__ __inline__ void gpu_matmul(float* A, float* B, float* C, int n)
 // }
 
 #ifndef TILE_SIZE
+// Prefer thread counts that are multiples of the warp size (32) for good occupancy.
 #define TILE_SIZE 32
 #endif
 
-#if TILE_SIZE <= 0 || TILE_SIZE > 1024
-#error "TILE_SIZE must be in (0,1024]"
+#if TILE_SIZE <= 0 || (TILE_SIZE * TILESIZE) > 1024
+#error "THREADS_PER_BLOCK (TILE_SIZE * TILESIZE) must be in (0,1024]"
 #endif
+
+// #ifndef THREADS_PER_BLOCK_X
+// #define THREADS_PER_BLOCK_X 32
+// #endif
+// #ifndef THREADS_PER_BLOCK_Y
+// #define THREADS_PER_BLOCK_Y 8
+// #endif
+
+// #if (THREADS_PER_BLOCK_X * THREADS_PER_BLOCK_Y) > 1024
+// #error "THREADS_PER_BLOCK_X*THREADS_PER_BLOCK_Y must be <= 1024"
+// #endif
+
+
+__global__ void gpu_matmul_tiled_nonsquare(float* A, float* B, float* C, int n)
+{
+    __shared__ float A_shared[THREADS_PER_BLOCK_Y][THREADS_PER_BLOCK_X];
+    __shared__ float B_shared[THREADS_PER_BLOCK_Y][THREADS_PER_BLOCK_X];
+
+    int ty    = threadIdx.y;
+    int tx    = threadIdx.x;
+
+    const int row = ty + blockIdx.y * blockDim.y;
+    const int col = tx + blockIdx.x * blockDim.x;
+
+    if (row >= n || col >= n)
+        return;
+
+    // if (n < TILE_SIZE)
+    // {
+    //     // Use the regular matmul when n is smaller than the tile.
+    //     gpu_matmul(A, B, C, n);
+    //     return;
+    // }
+
+    // if (n % TILE_SIZE != 0)
+    // {
+    //     // For simplicity, this kernel assumes n is a multiple of TILE_SIZE
+    //     // In practice, you would handle the boundary conditions here
+
+    //     // Here's a more efficient way would involve padding or conditional loading
+
+    // }
+
+    float val = 0.0f;  // registered
+    int n_tiles = (n + TILE_SIZE - 1) / TILE_SIZE;
+    for (int i = 0; i < n_tiles; ++i)
+    {
+        int a_col = i * TILE_SIZE + tx;
+        int b_row = i * TILE_SIZE + ty;
+
+        // Pad with zeros if block is less than tile size
+        A_shared[ty][tx] = (row < n && a_col < n) ? A[row * n + a_col] : 0.0f;
+        B_shared[ty][tx] = (b_row < n && col < n) ? B[b_row * n + col] : 0.0f;
+        __syncthreads();    // wait for all threads before reading shared memory
+
+        for (int k = 0; k < TILE_SIZE; ++k)
+            val += A_shared[ty][k] * B_shared[k][tx];
+        __syncthreads();
+    }
+    C[row*n + col] = val;
+}
 
 __global__ void gpu_matmul_tiled(float* A, float* B, float* C, int n)
 {
     __shared__ float A_shared[TILE_SIZE][TILE_SIZE];
     __shared__ float B_shared[TILE_SIZE][TILE_SIZE];
 
-    int thread_y    = threadIdx.y;
-    int thread_x    = threadIdx.x;
-    
-    int block_y     = blockIdx.y;
-    int block_x     = blockIdx.x;
+    int ty    = threadIdx.y;
+    int tx    = threadIdx.x;
 
-    int row = thread_y + block_y * blockDim.y;
-    int col = thread_x + block_x * blockDim.x;
+    const int row = ty + blockIdx.y * blockDim.y;
+    const int col = tx + blockIdx.x * blockDim.x;
 
     if (row >= n || col >= n)
         return;
 
     if (n < TILE_SIZE)
     {
+        // Use the regular matmul when n is smaller than the tile.
         gpu_matmul(A, B, C, n);
         return;
     }
@@ -78,18 +138,20 @@ __global__ void gpu_matmul_tiled(float* A, float* B, float* C, int n)
     {
         // For simplicity, this kernel assumes n is a multiple of TILE_SIZE
         // In practice, you would handle the boundary conditions here
-        return;
+
+        // Here's a more efficient way would involve padding or conditional loading
+
     }
 
     float val = 0.0f;  // registered
     for (int i = 0; i < n / TILE_SIZE; ++i)
     {
-        A_shared[thread_y][thread_x] = A[row*n + i*TILE_SIZE + thread_x];
-        B_shared[thread_y][thread_x] = B[(i*TILE_SIZE + thread_y)*n + col];
+        A_shared[ty][tx] = A[row*n + i*TILE_SIZE + tx];
+        B_shared[ty][tx] = B[(i*TILE_SIZE + ty)*n + col];
         __syncthreads();    // wait for all threads before reading shared memory
 
         for (int k = 0; k < TILE_SIZE; ++k)
-            val += A_shared[thread_y][k] * B_shared[k][thread_x];
+            val += A_shared[ty][k] * B_shared[k][tx];
         __syncthreads();
     }
     C[row*n + col] = val;
@@ -167,13 +229,13 @@ int main(int argc, char* argv[])
         B[i] = 0.5f;
     }
 
-    int threads = 32;   // warps are 32 threads
+    int threads = TILE_SIZE;   // warps are 32 threads
     dim3 blockDim(threads, threads);
     dim3 gridDim((n + blockDim.x - 1) / blockDim.x,
                  (n + blockDim.y - 1) / blockDim.y);
 
     // Warmup
-    gpu_matmul_tiled<<<gridDim, blockDim>>>(A, B, gpu_C, n);
+    gpu_matmul_tiled_nonsquare<<<gridDim, blockDim>>>(A, B, gpu_C, n);
     CUDA_CHECK(cudaGetLastError());
     CUDA_CHECK(cudaDeviceSynchronize());
 
@@ -187,7 +249,7 @@ int main(int argc, char* argv[])
     for (int it = 0; it < iters; ++it) {
         CUDA_CHECK(cudaMemset(gpu_C, 0, bytes));
         // Launch kernel
-        gpu_matmul_tiled<<<gridDim, blockDim>>>(A, B, gpu_C, n);
+        gpu_matmul_tiled_nonsquare<<<gridDim, blockDim>>>(A, B, gpu_C, n);
     }
 
     CUDA_CHECK(cudaGetLastError());
