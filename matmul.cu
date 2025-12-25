@@ -14,7 +14,7 @@
   } while (0)
 
 
-__global__ __device__ void gpu_matmul(float* A, float* B, float* C, int n)
+__device__ __inline__ void gpu_matmul(float* A, float* B, float* C, int n)
 {
     int col = threadIdx.x + blockIdx.x * blockDim.x;
     int row = threadIdx.y + blockIdx.y * blockDim.y;
