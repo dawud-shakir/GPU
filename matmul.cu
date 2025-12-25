@@ -29,7 +29,7 @@
 // }
 
 // Prof's
-__global__ void gpu_matmul(int n, float* A, float* B, float* C)
+__global__ void gpu_matmul(float* A, float* B, float* C, int n)
 {
     int col = blockIdx.x * blockDim.x + threadIdx.x;
     int row = blockIdx.y * blockDim.y + threadIdx.y;
