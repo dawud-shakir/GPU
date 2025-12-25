@@ -169,7 +169,7 @@ int main(int argc, char* argv[])
     gpu_C[change_this_index] = -3;
     printf("gpu_C[change_this_index]=%f, cpu_C[change_this_index]=%f\n", gpu_C[change_this_index], cpu_C[change_this_index]);
         // Confirm that CPU and GPU got the same answer
-    if (approximatelyEqual(gpu_C, cpu_C, n))
+    if (approximatelyEqual(gpu_C, cpu_C, n*n))
     {
         printf("Unified Memory: CPU and GPU answers match\n");
     }
