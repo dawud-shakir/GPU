@@ -14,7 +14,7 @@
   } while (0)
 
 
-__device__ __inline__ void gpu_matmul(float* A, float* B, float* C, int n)
+__device__ __inline__ void cpu_matmul(float* A, float* B, float* C, int n)
 {
     int col = threadIdx.x + blockIdx.x * blockDim.x;
     int row = threadIdx.y + blockIdx.y * blockDim.y;
@@ -64,7 +64,7 @@ __device__ __inline__ void gpu_matmul(float* A, float* B, float* C, int n)
 // #endif
 
 
-__global__ void gpu_matmul_tiled_nonsquare(float* A, float* B, float* C, int n)
+__global__ void gpu_matmul_tiled_2(float* A, float* B, float* C, int n)
 {
     __shared__ float A_shared[TILE_SIZE][TILE_SIZE];
     __shared__ float B_shared[TILE_SIZE][TILE_SIZE];
@@ -81,7 +81,7 @@ __global__ void gpu_matmul_tiled_nonsquare(float* A, float* B, float* C, int n)
         gpu_matmul(A, B, C, n);
         return;
     }
-    
+
     bool active = (row >= n || col >= n);   // possible deadlock if all threads don't reach __syncthreads() 
     // if (row >= n || col >= n)
     //     return;
@@ -228,7 +228,7 @@ int main(int argc, char* argv[])
                  (n + blockDim.y - 1) / blockDim.y);
 
     // Warmup
-    gpu_matmul_tiled_nonsquare<<<gridDim, blockDim>>>(A, B, gpu_C, n);
+    gpu_matmul_tiled_2<<<gridDim, blockDim>>>(A, B, gpu_C, n);
     CUDA_CHECK(cudaGetLastError());
     CUDA_CHECK(cudaDeviceSynchronize());
 
@@ -240,9 +240,9 @@ int main(int argc, char* argv[])
     CUDA_CHECK(cudaEventRecord(start));
     
     for (int it = 0; it < iters; ++it) {
-        CUDA_CHECK(cudaMemset(gpu_C, 0, bytes));
+        // CUDA_CHECK(cudaMemset(gpu_C, 0, bytes));
         // Launch kernel
-        gpu_matmul_tiled_nonsquare<<<gridDim, blockDim>>>(A, B, gpu_C, n);
+        gpu_matmul_tiled_2<<<gridDim, blockDim>>>(A, B, gpu_C, n);
     }
 
     CUDA_CHECK(cudaGetLastError());
