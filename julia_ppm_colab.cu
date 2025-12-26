@@ -119,12 +119,34 @@ int main(int argc, char** argv) {
     CUDA_CHECK(cudaMalloc((void**)&d_rgba, bytes));
 
     // More modern launch: 16x16 threads, grid covers the image
+    
+    // Increased occupancy with smaller blocks:
+    // Same number of threads, different shape 
+    //      → good for warp/coalescing discussion.
+    
+    // dim3 block(32, 8);
+
+
     dim3 block(16, 16);
     dim3 grid((dim + block.x - 1) / block.x,
               (dim + block.y - 1) / block.y);
+    
+    
+    cudaEvent_t start, stop;
+    cudaEventCreate(&start);
+    cudaEventCreate(&stop);
+
+    cudaEventRecord(start);
     kernel_rgba<<<grid, block>>>(d_rgba, dim);
+    cudaEventRecord(stop);
+    cudaEventSynchronize(stop);
+
     CUDA_CHECK(cudaGetLastError());
-    CUDA_CHECK(cudaDeviceSynchronize());
+    // CUDA_CHECK(cudaDeviceSynchronize()); // not needed with event sync
+
+    float ms;
+    cudaEventElapsedTime(&ms, start, stop);
+    printf("Kernel time: %.3f ms\n", ms);
 
     uint8_t* h_rgba = (uint8_t*)std::malloc(bytes);
     if (!h_rgba) {
