@@ -105,7 +105,7 @@ static void write_ppm_rgb(const char* filename, const uint8_t* rgba, int dim) {
 }
 
 int main(int argc, char** argv) {
-    const char* out = (argc >= 2) ? argv[1] : "julia.ppm";
+    const char* out = (argc >= 2) ? argv[1] : "/content/drive/MyDrive/CUDA/julia.ppm";
     int dim = (argc >= 3) ? std::atoi(argv[2]) : DEFAULT_DIM;
 
     if (dim <= 0 || dim > 8192) {
