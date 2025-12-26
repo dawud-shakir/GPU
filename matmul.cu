@@ -228,7 +228,7 @@ int main(int argc, char* argv[])
                  (n + blockDim.y - 1) / blockDim.y);
 
     // Warmup
-    gpu_matmul_tiled_2<<<gridDim, blockDim>>>(A, B, gpu_C, n);
+    gpu_matmul_tiled<<<gridDim, blockDim>>>(A, B, gpu_C, n);
     CUDA_CHECK(cudaGetLastError());
     CUDA_CHECK(cudaDeviceSynchronize());
 
@@ -242,7 +242,7 @@ int main(int argc, char* argv[])
     for (int it = 0; it < iters; ++it) {
         CUDA_CHECK(cudaMemset(gpu_C, 0, bytes));
         // Launch kernel
-        gpu_matmul_tiled_2<<<gridDim, blockDim>>>(A, B, gpu_C, n);
+        gpu_matmul_tiled<<<gridDim, blockDim>>>(A, B, gpu_C, n);
     }
 
     CUDA_CHECK(cudaGetLastError());
