@@ -240,7 +240,7 @@ int main(int argc, char* argv[])
     CUDA_CHECK(cudaEventRecord(start));
     
     for (int it = 0; it < iters; ++it) {
-        // CUDA_CHECK(cudaMemset(gpu_C, 0, bytes));
+        CUDA_CHECK(cudaMemset(gpu_C, 0, bytes));
         // Launch kernel
         gpu_matmul_tiled_2<<<gridDim, blockDim>>>(A, B, gpu_C, n);
     }
