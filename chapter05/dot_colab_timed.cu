@@ -16,21 +16,6 @@
   } \
 } while (0)
 
-// static void write_ppm_rgb_from_rgba(const char* filename, const unsigned char* rgba, int w, int h) {
-//   FILE* f = std::fopen(filename, "wb");
-//   if (!f) { perror("fopen"); std::exit(1); }
-//   std::fprintf(f, "P6\n%d %d\n255\n", w, h);
-//   // Input is RGBA (4 bytes per pixel). Write RGB.
-//   const size_t n = (size_t)w * (size_t)h;
-//   for (size_t i = 0; i < n; ++i) {
-//     const unsigned char* p = rgba + 4*i;
-//     std::fputc(p[0], f);
-//     std::fputc(p[1], f);
-//     std::fputc(p[2], f);
-//   }
-//   std::fclose(f);
-// }
-
 #define N 33792
 
 __global__ void dot( float *a, float *b, float *c ) {
@@ -87,6 +72,7 @@ int main(void) {
   CUDA_CHECK(cudaMemcpy(dev_a, a, N*sizeof(float), cudaMemcpyHostToDevice));
   CUDA_CHECK(cudaMemcpy(dev_b, b, N*sizeof(float), cudaMemcpyHostToDevice));
 
+  // threadsPerBlock must be a power of 2 for division in dot()
   const int threadsPerBlock = 256;
   const int blocksPerGrid   = 64;
 
@@ -114,6 +100,10 @@ int main(void) {
   auto sum_squares = [](float x) -> float { return x*(x+1.0f)*(2.0f*x+1.0f)/6.0f; };
   float expected = 2.0f * sum_squares((float)(N-1));
   std::printf("Dot product: %.6g\nExpected:   %.6g\n", c, expected);
+
+    // Kernel time: 0.135392 ms
+    // Dot product: 2.57236e+13
+    // Expected:   2.57236e+13
 
   CUDA_CHECK(cudaEventDestroy(start));
   CUDA_CHECK(cudaEventDestroy(stop));
