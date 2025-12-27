@@ -61,7 +61,7 @@ __global__ void kernel( unsigned char *ptr ) {
 
 
 int main(int argc, char** argv) {
-  const char* out = (argc >= 2) ? argv[1] : "shared_bitmap.ppm";
+  const char* out = (argc >= 2) ? argv[1] : "/content/drive/MyDrive/CUDA/shared_bitmap.ppm";
   const size_t bytes = (size_t)DIM * (size_t)DIM * 4;
 
   unsigned char* dev = nullptr;

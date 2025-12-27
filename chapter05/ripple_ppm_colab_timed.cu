@@ -55,7 +55,7 @@ __global__ void kernel( unsigned char *ptr, int ticks ) {
 
 
 int main(int argc, char** argv) {
-  const char* out = (argc >= 2) ? argv[1] : "ripple.ppm";
+  const char* out = (argc >= 2) ? argv[1] : "/content/drive/MyDrive/CUDA/ripple.ppm";
   int ticks = (argc >= 3) ? std::atoi(argv[2]) : 0;
 
   const size_t bytes = (size_t)DIM * (size_t)DIM * 4;
