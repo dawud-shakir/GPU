@@ -39,6 +39,60 @@ __global__ void add(const int* a, const int* b, int* c) {
   if (tid < N) c[tid] = a[tid] + b[tid];
 }
 
+/* 
+    This kernel uses a loop with stride to cover all N elements,
+    even if the grid size is less than N.
+
+    Each thread handles:
+
+            tid, tid + gridSize, tid + 2·gridSize, ...
+
+    This allows for fewer blocks and threads to cover all elements.
+
+
+    1. Improved flexibility: Can run with smaller grids/blocks.
+    2. Better resource utilization: More work per thread can lead to better occupancy.
+    3. Reduced launch overhead: Fewer threads/blocks means less overhead.
+
+    This was especially important when:
+
+        Grid size was limited
+
+        Launch overhead mattered more
+
+        Hardware was less flexible
+
+ */
+__global__ void strided_add( int *a, int *b, int *c ) {
+    int tid = threadIdx.x + blockIdx.x * blockDim.x;
+    while (tid < N) {
+        c[tid] = a[tid] + b[tid];
+        tid += blockDim.x * gridDim.x;
+    }
+}
+
+void test_strided_add(int *da, int *db, int *dc) {
+    dim3 blocks(32);   // Fewer blocks
+    dim3 threads(64);  // Fewer threads
+
+    cudaEvent_t start, stop;
+    CUDA_CHECK(cudaEventCreate(&start));
+    CUDA_CHECK(cudaEventCreate(&stop));
+
+    CUDA_CHECK(cudaEventRecord(start));
+    strided_add<<<blocks, threads>>>(da, db, dc);
+    CUDA_CHECK(cudaEventRecord(stop));
+    CUDA_CHECK(cudaEventSynchronize(stop));
+    CUDA_CHECK(cudaGetLastError());
+
+    float ms=0.0f;
+    CUDA_CHECK(cudaEventElapsedTime(&ms, start, stop));
+    std::printf("N=%d, Strided Kernel time: %.6f ms\n", N, ms);
+
+    CUDA_CHECK(cudaEventDestroy(start));
+    CUDA_CHECK(cudaEventDestroy(stop));
+}
+
 int main(int argc, char** argv) {
   int *a = (int*)std::malloc(N*sizeof(int));
   int *b = (int*)std::malloc(N*sizeof(int));
@@ -70,7 +124,7 @@ int main(int argc, char** argv) {
 
   float ms=0.0f;
   CUDA_CHECK(cudaEventElapsedTime(&ms, start, stop));
-  std::printf("Kernel time: %.6f ms\n", ms);
+  std::printf("N=%d, Kernel time: %.6f ms\n", N, ms);
 
   CUDA_CHECK(cudaMemcpy(c, dc, N*sizeof(int), cudaMemcpyDeviceToHost));
 
@@ -78,13 +132,26 @@ int main(int argc, char** argv) {
   for (int i=0;i<N;i++){
     if (c[i] != a[i]+b[i]) { ok=false; std::printf("Mismatch at %d: %d + %d != %d\n", i, a[i], b[i], c[i]); break; }
   }
+
   std::printf("Verification: %s\n", ok ? "PASS" : "FAIL");
 
   CUDA_CHECK(cudaEventDestroy(start));
   CUDA_CHECK(cudaEventDestroy(stop));
+
+
+    // Now test strided_add with fewer blocks/threads
+    CUDA_CHECK(cudaMemset(dc, 0, N*sizeof(int))); // clear output
+    test_strided_add(da, db, dc);
+  
+  bool strided_ok=true;
+  for (int i=0;i<N;i++){
+    if (c[i] != a[i]+b[i]) { strided_ok=false; std::printf("Mismatch at %d: %d + %d != %d\n", i, a[i], b[i], c[i]); break; }
+  }
+  std::printf("Verification: %s\n", strided_ok ? "PASS" : "FAIL");
+
   CUDA_CHECK(cudaFree(da));
   CUDA_CHECK(cudaFree(db));
   CUDA_CHECK(cudaFree(dc));
   std::free(a); std::free(b); std::free(c);
-  return ok ? 0 : 2;
+  return ok & strided_ok ? 0 : 2;
 }
