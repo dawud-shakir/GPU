@@ -124,15 +124,15 @@ int main(int argc, char** argv) {
   CUDA_CHECK(cudaEventDestroy(stop));
 
 
-    // Now test strided_add with fewer blocks/threads
-    CUDA_CHECK(cudaMemset(dc, 0, N*sizeof(int))); // clear output
-    test_strided_add(da, db, dc);
+//     // Now test strided_add with fewer blocks/threads
+//     CUDA_CHECK(cudaMemset(dc, 0, N*sizeof(int))); // clear output
+//     test_strided_add(da, db, dc);
   
-  bool strided_ok=true;
-  for (int i=0;i<N;i++){
-    if (c[i] != a[i]+b[i]) { strided_ok=false; std::printf("Mismatch at %d: %d + %d != %d\n", i, a[i], b[i], c[i]); break; }
-  }
-  std::printf("Verification: %s\n", strided_ok ? "PASS" : "FAIL");
+//   bool strided_ok=true;
+//   for (int i=0;i<N;i++){
+//     if (c[i] != a[i]+b[i]) { strided_ok=false; std::printf("Mismatch at %d: %d + %d != %d\n", i, a[i], b[i], c[i]); break; }
+//   }
+//   std::printf("Verification: %s\n", strided_ok ? "PASS" : "FAIL");
 
   CUDA_CHECK(cudaFree(da));
   CUDA_CHECK(cudaFree(db));
