@@ -18,11 +18,6 @@
 
 #define N (33 * 1024)   // 33792 elements (use -DN=<value> to override)
 
-__global__ void add(const int* a, const int* b, int* c) {
-  int tid = threadIdx.x + blockIdx.x * blockDim.x;
-  // grid covers exactly N in the original example: 128 blocks * 128 threads = 16384 = 33*1024
-  if (tid < N) c[tid] = a[tid] + b[tid];
-}
 
 /* 
     This kernel uses a loop with stride to cover all N elements,
@@ -55,6 +50,11 @@ __global__ void strided_add( int *a, int *b, int *c ) {
         tid += blockDim.x * gridDim.x;
     }
 }
+__global__ void add(const int* a, const int* b, int* c) {
+  int tid = threadIdx.x + blockIdx.x * blockDim.x;
+  // grid covers exactly N in the original example: 128 blocks * 128 threads = 16384 = 33*1024
+  if (tid < N) c[tid] = a[tid] + b[tid];
+}
 
 void test_strided_add(int *da, int *db, int *dc) {
     dim3 blocks(32);   // Fewer blocks
@@ -72,7 +72,7 @@ void test_strided_add(int *da, int *db, int *dc) {
 
     float ms=0.0f;
     CUDA_CHECK(cudaEventElapsedTime(&ms, start, stop));
-    std::printf("N=%d, Strided Kernel time: %.6f ms\n", N, ms);
+    std::printf("N=%d, Strided Kernel time: %.10f ms\n", N, ms);
 
     CUDA_CHECK(cudaEventDestroy(start));
     CUDA_CHECK(cudaEventDestroy(stop));
@@ -94,7 +94,7 @@ int main(int argc, char** argv) {
   CUDA_CHECK(cudaMemcpy(da, a, N*sizeof(int), cudaMemcpyHostToDevice));
   CUDA_CHECK(cudaMemcpy(db, b, N*sizeof(int), cudaMemcpyHostToDevice));
 
-  dim3 blocks(128);
+//   dim3 blocks(128);
   dim3 threads(128);
 
   cudaEvent_t start, stop;
@@ -102,14 +102,15 @@ int main(int argc, char** argv) {
   CUDA_CHECK(cudaEventCreate(&stop));
 
   CUDA_CHECK(cudaEventRecord(start));
-  add<<<blocks, threads>>>(da, db, dc);
+//   add<<<blocks, threads>>>(da, db, dc);
+  add<<<(N+threads.x-1)/threads.x, threads>>>(da, db, dc);
   CUDA_CHECK(cudaEventRecord(stop));
   CUDA_CHECK(cudaEventSynchronize(stop));
   CUDA_CHECK(cudaGetLastError());
 
   float ms=0.0f;
   CUDA_CHECK(cudaEventElapsedTime(&ms, start, stop));
-  std::printf("N=%d, Kernel time: %.6f ms\n", N, ms);
+  std::printf("N=%d, Kernel time: %.10f ms\n", N, ms);
 
   CUDA_CHECK(cudaMemcpy(c, dc, N*sizeof(int), cudaMemcpyDeviceToHost));
 
