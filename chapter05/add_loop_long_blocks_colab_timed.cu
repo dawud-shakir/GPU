@@ -94,12 +94,15 @@ int main(int argc, char** argv) {
   CUDA_CHECK(cudaMemcpy(da, a, N*sizeof(int), cudaMemcpyHostToDevice));
   CUDA_CHECK(cudaMemcpy(db, b, N*sizeof(int), cudaMemcpyHostToDevice));
 
-//   dim3 blocks(128);
+  dim3 blocks(128);
   dim3 threads(128);
 
   cudaEvent_t start, stop;
   CUDA_CHECK(cudaEventCreate(&start));
   CUDA_CHECK(cudaEventCreate(&stop));
+
+    printf("Running add kernel with %d blocks of %d threads...\n", (N+threads.x-1)/threads.x, threads.x);
+    printf("Block size: %d\n", blocks.x);
 
   CUDA_CHECK(cudaEventRecord(start));
 //   add<<<blocks, threads>>>(da, db, dc);
