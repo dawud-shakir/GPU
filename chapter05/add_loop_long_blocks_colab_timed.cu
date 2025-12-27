@@ -44,15 +44,21 @@
 
  */
 __global__ void strided_add( int *a, int *b, int *c ) {
+    // Strided: each thread does grid/block elements
     int tid = threadIdx.x + blockIdx.x * blockDim.x;
+    int count = 0;
     while (tid < N) {
         c[tid] = a[tid] + b[tid];
         tid += blockDim.x * gridDim.x;
+        count++;
     }
+   if (blockIdx.x==0 && blockIdx.y==0 && blockIdx.z==0 &&
+    threadIdx.x==0 && threadIdx.y==0 && threadIdx.z==0)
+        printf("Thread %d did %d adds\n", threadIdx.x + blockIdx.x * blockDim.x, count);
 }
 __global__ void add(const int* a, const int* b, int* c) {
+  // Non-strided: each thread does one element
   int tid = threadIdx.x + blockIdx.x * blockDim.x;
-  // grid covers exactly N in the original example: 128 blocks * 128 threads = 16384 = 33*1024
   if (tid < N) c[tid] = a[tid] + b[tid];
 }
 
