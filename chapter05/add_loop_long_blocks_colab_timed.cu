@@ -16,7 +16,7 @@
   } \
 } while (0)
 
-#define N (33 * 1024)
+#define N (33 * 1024)   // 33792 elements (use -DN=<value> to override)
 
 __global__ void add(const int* a, const int* b, int* c) {
   int tid = threadIdx.x + blockIdx.x * blockDim.x;
