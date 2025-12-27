@@ -120,11 +120,18 @@ int main(int argc, char** argv) {
 
   std::printf("Verification: %s\n", ok ? "PASS" : "FAIL");
 
-    int sum = 0;
+
+    int sum_a = 0;
+    int sum_b = 0;
+    int sum_c = 0;
     for (int i=0;i<N;i++) {
-        sum += c[i];
+        sum_a += a[i];
+        sum_b += b[i];
+        sum_c += c[i];
     }
-    std::printf("Sum of c: %d\n", sum);
+    std::printf("Sum of a: %d\n", sum_a);
+    std::printf("Sum of b: %d\n", sum_b);
+    std::printf("Sum of c: %d\n", sum_c);
 
   CUDA_CHECK(cudaEventDestroy(start));
   CUDA_CHECK(cudaEventDestroy(stop));
