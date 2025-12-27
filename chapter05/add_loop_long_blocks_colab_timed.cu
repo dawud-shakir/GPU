@@ -57,8 +57,14 @@ __global__ void add(const int* a, const int* b, int* c) {
 }
 
 void test_strided_add(int *da, int *db, int *dc) {
-    dim3 blocks(32);   // Fewer blocks
-    dim3 threads(64);  // Fewer threads
+    // dim3 threads(64);  // Fewer threads
+    // dim3 blocks(32);   // Fewer blocks
+
+    unsigned int threads = 128;
+    unsigned int blocks = (N + 128 - 1) / 128; // Ensure enough blocks to cover N
+
+    // Warmup
+    strided_add<<<blocks, threads>>>(da, db, dc);
 
     cudaEvent_t start, stop;
     CUDA_CHECK(cudaEventCreate(&start));
@@ -94,19 +100,26 @@ int main(int argc, char** argv) {
   CUDA_CHECK(cudaMemcpy(da, a, N*sizeof(int), cudaMemcpyHostToDevice));
   CUDA_CHECK(cudaMemcpy(db, b, N*sizeof(int), cudaMemcpyHostToDevice));
 
-  dim3 blocks(128);
-  dim3 threads(128);
+//   dim3 threads(128);
+//   dim3 blocks(128);
+
+    unsigned int threads = 128;
+    unsigned int blocks = (N + 128 - 1) / 128; // Ensure enough blocks to cover N
+    printf("Running add kernel with %u blocks of %u threads...\n", blocks, threads);
+
+  // <<<blocks per grid, threads per block.>>>
+  // Warmup
+  add<<<blocks, threads>>>(da, db, dc);
 
   cudaEvent_t start, stop;
   CUDA_CHECK(cudaEventCreate(&start));
   CUDA_CHECK(cudaEventCreate(&stop));
 
-    printf("Running add kernel with %d blocks of %d threads...\n", (N+threads.x-1)/threads.x, threads.x);
-    printf("Block size: %d\n", blocks.x);
-
+  
   CUDA_CHECK(cudaEventRecord(start));
-//   add<<<blocks, threads>>>(da, db, dc);
-  add<<<(N+threads.x-1)/threads.x, threads>>>(da, db, dc);
+
+  add<<<blocks, threads>>>(da, db, dc);
+
   CUDA_CHECK(cudaEventRecord(stop));
   CUDA_CHECK(cudaEventSynchronize(stop));
   CUDA_CHECK(cudaGetLastError());
@@ -125,31 +138,19 @@ int main(int argc, char** argv) {
   std::printf("Verification: %s\n", ok ? "PASS" : "FAIL");
 
 
-    int sum_a = 0;
-    int sum_b = 0;
-    int sum_c = 0;
-    for (int i=0;i<N;i++) {
-        sum_a += a[i];
-        sum_b += b[i];
-        sum_c += c[i];
-    }
-    std::printf("Sum of a: %d\n", sum_a);
-    std::printf("Sum of b: %d\n", sum_b);
-    std::printf("Sum of c: %d\n", sum_c);
-
   CUDA_CHECK(cudaEventDestroy(start));
   CUDA_CHECK(cudaEventDestroy(stop));
 
 
-//     // Now test strided_add with fewer blocks/threads
-//     CUDA_CHECK(cudaMemset(dc, 0, N*sizeof(int))); // clear output
-//     test_strided_add(da, db, dc);
+    // Now test strided_add with fewer blocks/threads
+    CUDA_CHECK(cudaMemset(dc, 0, N*sizeof(int))); // clear output
+    test_strided_add(da, db, dc);
   
-//   bool strided_ok=true;
-//   for (int i=0;i<N;i++){
-//     if (c[i] != a[i]+b[i]) { strided_ok=false; std::printf("Mismatch at %d: %d + %d != %d\n", i, a[i], b[i], c[i]); break; }
-//   }
-//   std::printf("Verification: %s\n", strided_ok ? "PASS" : "FAIL");
+  bool strided_ok=true;
+  for (int i=0;i<N;i++){
+    if (c[i] != a[i]+b[i]) { strided_ok=false; std::printf("Mismatch at %d: %d + %d != %d\n", i, a[i], b[i], c[i]); break; }
+  }
+  std::printf("Verification: %s\n", strided_ok ? "PASS" : "FAIL");
 
   CUDA_CHECK(cudaFree(da));
   CUDA_CHECK(cudaFree(db));
