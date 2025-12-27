@@ -34,7 +34,7 @@ static void write_ppm_rgb_from_rgba(const char* filename, const unsigned char* r
 #define N 33792
 
 __global__ void dot( float *a, float *b, float *c ) {
-    __shared__ float cache[threadsPerBlock];
+    extern __shared__ float cache[]; // dynamic shared memory (from triple chevron syntax)
     int tid = threadIdx.x + blockIdx.x * blockDim.x;
     int cacheIndex = threadIdx.x;
 
@@ -95,7 +95,7 @@ int main(void) {
   CUDA_CHECK(cudaEventCreate(&stop));
 
   CUDA_CHECK(cudaEventRecord(start));
-  dot<<<blocksPerGrid, threadsPerBlock>>>(dev_a, dev_b, dev_partial_c);
+  dot<<<blocksPerGrid, threadsPerBlock, threadsPerBlock * sizeof(float)>>>(dev_a, dev_b, dev_partial_c);
   CUDA_CHECK(cudaEventRecord(stop));
   CUDA_CHECK(cudaEventSynchronize(stop));
   CUDA_CHECK(cudaGetLastError());
