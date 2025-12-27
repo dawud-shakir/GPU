@@ -16,21 +16,6 @@
   } \
 } while (0)
 
-static void write_ppm_rgb_from_rgba(const char* filename, const unsigned char* rgba, int w, int h) {
-  FILE* f = std::fopen(filename, "wb");
-  if (!f) { perror("fopen"); std::exit(1); }
-  std::fprintf(f, "P6\n%d %d\n255\n", w, h);
-  // Input is RGBA (4 bytes per pixel). Write RGB.
-  const size_t n = (size_t)w * (size_t)h;
-  for (size_t i = 0; i < n; ++i) {
-    const unsigned char* p = rgba + 4*i;
-    std::fputc(p[0], f);
-    std::fputc(p[1], f);
-    std::fputc(p[2], f);
-  }
-  std::fclose(f);
-}
-
 #define N (33 * 1024)
 
 __global__ void add(const int* a, const int* b, int* c) {
