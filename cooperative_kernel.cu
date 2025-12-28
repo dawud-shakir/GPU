@@ -1,4 +1,4 @@
-// coorperative_threads.cu (by Charlie)
+// coorperative_kernel.cu (by Charlie)
 
 #include <cuda_runtime.h>
 #include <cstdio>
@@ -19,7 +19,7 @@ static void checkCuda(cudaError_t e, const char* msg)
 namespace cg = cooperative_groups;
 
 // Kernel: compute sum of squares, then (after grid sync) take sqrt on GPU.
-__global__ void l2_norm_coop_kernel(const float* x, int n, float* out_norm)
+__global__ void l2_norm_coop_kernel(const float* x, const int n, float* out_norm)
 {
     cg::grid_group grid = cg::this_grid();
 
@@ -91,7 +91,12 @@ int main()
     int blocks = prop.multiProcessorCount;  // one block per SM
 
     // Cooperative launch requires using cudaLaunchCooperativeKernel
-    void* args[] = { &d_x, &n, &d_norm };
+    void* args[] = {
+        (void*)&d_x,     // const float*
+        (void*)&n,       // int
+        (void*)&d_norm   // float*
+    };
+
     size_t shmem_bytes = threads * sizeof(float);
 
     checkCuda(cudaLaunchCooperativeKernel(
