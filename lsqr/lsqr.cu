@@ -124,7 +124,7 @@ int main(int argc, char** argv)
 
     // Verify results against CPU
     double gpu_sum = 0.0;
-    CUDA_CHECK(cudaMemcpy(y, d_y, n * sizeof(float), cudaMemcpyDeviceToHost));
+    CUDA_CHECK(cudaMemcpy(y, d_y, n * sizeof(float), cudaMemcpyDeviceToHost)); // D2H copy
     for (int i = 0; i < n; ++i)
         gpu_sum += y[i];
 
