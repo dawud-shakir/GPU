@@ -126,7 +126,7 @@ int getBlockSize(int n, int threads)
     return min(blocks_for_coverage, blocks_for_gpu);
 }
 
-float norm(const float* d_x, int n)
+float gpu_norm(const float* d_x, int n)
 {
     float* sum = nullptr;
     CUDA_CHECK(cudaMallocManaged(&sum, sizeof(float)));
@@ -143,6 +143,16 @@ float norm(const float* d_x, int n)
     CUDA_CHECK(cudaFree(sum));
 
     return norm;
+}
+
+float cpu_norm(const float* x, int n)
+{
+    double sum = 0.0;
+    for (int i = 0; i < n; ++i) {
+        double v = x[i];
+        sum += v * v;
+    }
+    return std::sqrt(sum);
 }
 
 void cpu_matvec(const float* A, int n, int m, const float* x, float* y)
@@ -237,7 +247,8 @@ int main(int argc, char** argv)
     }
     printf("Result verification passed! rel_err = %.6e\n", rel_err);
 
-    printf("Norm of y: %.6f\n", norm(d_y, n));
+    printf("GPU Norm of y: %.6f\n", gpu_norm(d_y, n));
+    printf("CPU Norm of y: %.6f\n", cpu_norm(y, n));
 
     // Cleanup
     CUDA_CHECK(cudaEventDestroy(start));
