@@ -67,7 +67,6 @@ int main(int argc, char** argv)
     int n = (argc > 1) ? std::atoi(argv[1]) : (1 << 20);
 
     // Host allocations
-    printf("At line %d\n", __LINE__);
 
     float *A = nullptr, *x = nullptr, *y = nullptr; 
     CUDA_CHECK(cudaMallocHost(&A, n * n * sizeof(float)));
@@ -80,6 +79,8 @@ int main(int argc, char** argv)
         for (int j = 0; j < n; ++j)
             A[i * n + j] = 2.0f;
     }
+        printf("At line %d\n", __LINE__);
+
 
     CUDA_CHECK(cudaMemset(y, 0, n * sizeof(float)));
 
