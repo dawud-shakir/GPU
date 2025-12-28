@@ -51,8 +51,7 @@ __global__ void gpu_matvec(const float* A, int n, int m, const float* x, float* 
     y[tid] = sum;
 }
 
-// Take the square root of the result after calling this kernel
-__global__ void l2_norm(const float* x, int n, float* result)
+__global__ void sumsq(const float* x, int n, float* result)
 {
     extern __shared__ float sdata[];
 
@@ -78,6 +77,75 @@ __global__ void l2_norm(const float* x, int n, float* result)
         atomicAdd(result, sdata[0]);
 }
 
+// __global__ void sumsq_gridstride(const float* __restrict__ x,
+//                                           int n,
+//                                           float* __restrict__ sumsq_out)
+// {
+//     extern __shared__ float sdata[];
+
+//     int tid  = threadIdx.x;
+//     int gtid = blockIdx.x * blockDim.x + tid;
+//     int stride = blockDim.x * gridDim.x;
+
+//     // grid-stride accumulation of sum of squares
+//     float local = 0.0f;
+//     for (int i = gtid; i < n; i += stride) {
+//         float v = x[i];
+//         local += v * v;
+//     }
+
+//     // reduce within block in shared memory
+//     sdata[tid] = local;
+//     __syncthreads();
+
+//     for (int s = blockDim.x / 2; s > 0; s >>= 1) {
+//         if (tid < s)
+//             sdata[tid] += sdata[tid + s];
+//         __syncthreads();
+//     }
+
+//     // one atomic per block
+//     if (tid == 0)
+//         atomicAdd(sumsq_out, sdata[0]);
+// }
+
+int getBlockSize(int n, int threads)
+{
+    threads = 256;
+
+    cudaDeviceProp prop;
+    CUDA_CHECK(cudaGetDeviceProperties(&prop, 0));
+    int SM = prop.multiProcessorCount;
+
+    // enough blocks to cover n at least once:
+    int blocks_for_coverage = (n + threads - 1) / threads;
+
+    // “keep GPU busy” target:
+    int blocks_for_gpu = 8 * SM;  // try 4*SM, 8*SM
+
+    return min(blocks_for_coverage, blocks_for_gpu);
+}
+
+float norm(const float* d_x, int n)
+{
+    float* sumsq = nullptr;
+    CUDA_CHECK(cudaMallocManaged(&sumsq, sizeof(float)));
+    CUDA_CHECK(cudaMemset(sumsq, 0, sizeof(float)));
+
+    int threadsPerBlock = 256;
+    int blocksPerGrid = getBlockSize(n, threadsPerBlock);
+
+    sumsq<<<blocksPerGrid, threadsPerBlock, threadsPerBlock * sizeof(float)>>>(d_x, n, sumsq);
+    CUDA_CHECK(cudaGetLastError());
+    CUDA_CHECK(cudaDeviceSynchronize());
+
+    float norm = std::sqrt(*sumsq);
+
+    CUDA_CHECK(cudaFree(sumsq));
+
+    return norm;
+}
+
 void cpu_matvec(const float* A, int n, int m, const float* x, float* y)
 {
     for (int ii = 0; ii < n; ++ii) {
@@ -88,8 +156,6 @@ void cpu_matvec(const float* A, int n, int m, const float* x, float* y)
         y[ii] = sum;
     }
 }
-
-void with_stride
 
 int main(int argc, char** argv)
 {
@@ -172,6 +238,7 @@ int main(int argc, char** argv)
     }
     printf("Result verification passed! rel_err = %.6e\n", rel_err);
 
+    printf("Norm of y: %.6f\n", norm(d_y, n));
 
     // Cleanup
     CUDA_CHECK(cudaEventDestroy(start));
