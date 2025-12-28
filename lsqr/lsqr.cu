@@ -67,6 +67,7 @@ int main(int argc, char** argv)
     int n = (argc > 1) ? std::atoi(argv[1]) : (1 << 20);
 
     // Host allocations
+    printf("At line %d\n", __LINE__);
 
     float *A = nullptr, *x = nullptr, *y = nullptr; 
     CUDA_CHECK(cudaMallocHost(&A, n * n * sizeof(float)));
@@ -96,7 +97,6 @@ int main(int argc, char** argv)
     // Kernel launch config
     int threads = 256;
     int blocks = (n + threads - 1) / threads;
-    printf("At line %d\n", __LINE__);
     // Warmup
     gpu_matvec<<<blocks, threads>>>(d_A, n, n, d_x, d_y);
     CUDA_CHECK(cudaGetLastError());
