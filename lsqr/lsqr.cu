@@ -128,20 +128,19 @@ int getBlockSize(int n, int threads)
 
 float norm(const float* d_x, int n)
 {
-    float* sumsq = nullptr;
-    CUDA_CHECK(cudaMallocManaged(&sumsq, sizeof(float)));
-    CUDA_CHECK(cudaMemset(sumsq, 0, sizeof(float)));
+    float* sum = nullptr;
+    CUDA_CHECK(cudaMallocManaged(&sum, sizeof(float)));
+    CUDA_CHECK(cudaMemset(sum, 0, sizeof(float)));
 
     int threadsPerBlock = 256;
     int blocksPerGrid = getBlockSize(n, threadsPerBlock);
 
-    sumsq<<<blocksPerGrid, threadsPerBlock, threadsPerBlock * sizeof(float)>>>(d_x, n, sumsq);
+    sumsq<<<blocksPerGrid, threadsPerBlock, threadsPerBlock * sizeof(float)>>>(d_x, n, sum);
     CUDA_CHECK(cudaGetLastError());
     CUDA_CHECK(cudaDeviceSynchronize());
 
-    float norm = std::sqrt(*sumsq);
-
-    CUDA_CHECK(cudaFree(sumsq));
+    float norm = std::sqrt(*sum);   
+    CUDA_CHECK(cudaFree(sum));
 
     return norm;
 }
