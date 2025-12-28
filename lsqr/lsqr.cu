@@ -43,7 +43,7 @@ __global__ void gpu_matvec(const float* A, int n, int m, const float* x, float* 
     if (ii >= n)
         return;
 
-    float* row = &A[(size_t)ii * (size_t)m];
+    const float* row = &A[(size_t)ii * (size_t)m];
     float sum = 0.0f;
     for (int j = 0; j < m; ++j)
         sum += row[j] * x[j];
