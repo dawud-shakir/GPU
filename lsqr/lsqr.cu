@@ -37,13 +37,13 @@ Run: ./<executable>
 //     }
 // }
 
-__global__ void gpu_matvec(float* A, int n, int m, float* x, float* y)
+__global__ void gpu_matvec(const float* A, int n, int m, const float* x, float* y)
 {
     int ii = blockIdx.x * blockDim.x + threadIdx.x;
     if (ii >= n)
         return;
 
-    float* row = &A[(size_t)ii * (size_t)m];
+    const float* row = &A[(size_t)ii * (size_t)m];
     float sum = 0.0f;
     for (int j = 0; j < m; ++j)
         sum += row[j] * x[j];
@@ -112,10 +112,11 @@ int main(int argc, char** argv)
     for (int it = 0; it < iters; ++it) {
         gpu_matvec<<<blocks, threads>>>(d_A, n, n, d_x, d_y);
     }
-    CUDA_CHECK(cudaGetLastError());
     CUDA_CHECK(cudaEventRecord(stop));
     CUDA_CHECK(cudaEventSynchronize(stop));
+    CUDA_CHECK(cudaGetLastError());
 
+    printf("Completed %d iterations.\n", iters);
     float ms = 0.0f;
     CUDA_CHECK(cudaEventElapsedTime(&ms, start, stop));
     float ms_per = ms / iters;
