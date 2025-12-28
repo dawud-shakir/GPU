@@ -37,13 +37,13 @@ Run: ./<executable>
 //     }
 // }
 
-__global__ void gpu_matvec(const float* A, int n, int m, const float* x, float* y)
+__global__ void gpu_matvec(float* A, int n, int m, float* x, float* y)
 {
     int ii = blockIdx.x * blockDim.x + threadIdx.x;
     if (ii >= n)
         return;
 
-    const float* row = &A[(size_t)ii * (size_t)m];
+    float* row = &A[(size_t)ii * (size_t)m];
     float sum = 0.0f;
     for (int j = 0; j < m; ++j)
         sum += row[j] * x[j];
