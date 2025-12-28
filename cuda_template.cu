@@ -29,6 +29,23 @@ __global__ void saxpy(const float a, const float* x, float* y, int n)
         y[i] = a * x[i] + y[i];
 }
 
+// ------------------------------------------------------------
+static bool get_arg_int(int argc, char** argv, const std::string& k, int& v) {
+    for (int i = 1; i + 1 < argc; ++i)
+        if (k == argv[i]) { v = std::atoi(argv[i + 1]); return true; }
+    return false;
+}
+static bool get_arg_str(int argc, char** argv, const std::string& k, std::string& v) {
+    for (int i = 1; i + 1 < argc; ++i)
+        if (k == argv[i]) { v = argv[i + 1]; return true; }
+    return false;
+}
+
+// Example usage of argument parsing
+    // get_arg_int(argc, argv, "--n_exp_max", n_exp_max);  // n_exp_max is the default int
+    // get_arg_str(argc, argv, "--mode", mode);               // mode is the default string
+// ------------------------------------------------------------
+
 int main(int argc, char** argv)
 {
     // Problem size (default 1<<20)

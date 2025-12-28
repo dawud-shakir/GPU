@@ -58,6 +58,12 @@ __global__ void l2_norm_coop_kernel(const float* x, const int n, float* out_norm
     }
 }
 
+__global__ void fill_ones(float* x, int n)
+{
+    int i = blockIdx.x * blockDim.x + threadIdx.x;
+    if (i < n) x[i] = 1.0f;
+}
+
 
 int main()
 {
@@ -65,6 +71,9 @@ int main()
     const int n = 1 << 20;
     float* d_x = nullptr;
     float* d_norm = nullptr;
+
+
+
     checkCuda(cudaMalloc(&d_x, n * sizeof(float)), "cudaMalloc d_x");
     checkCuda(cudaMalloc(&d_norm, sizeof(float)), "cudaMalloc d_norm");
 
@@ -89,6 +98,12 @@ int main()
     // A safe, simple choice: use the maximum number of resident blocks
     // per SM for this kernel is complicated; start conservative:
     int blocks = prop.multiProcessorCount;  // one block per SM
+
+
+    int blocks_fill = (n + threads - 1) / threads;
+    fill_ones<<<blocks_fill, threads>>>(d_x, n);
+    checkCuda(cudaGetLastError(), "fill_ones launch");
+    checkCuda(cudaDeviceSynchronize(), "fill_ones sync");
 
     // Cooperative launch requires using cudaLaunchCooperativeKernel
     void* args[] = {

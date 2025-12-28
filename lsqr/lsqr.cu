@@ -39,15 +39,43 @@ Run: ./<executable>
 
 __global__ void gpu_matvec(const float* A, int n, int m, const float* x, float* y)
 {
-    int ii = blockIdx.x * blockDim.x + threadIdx.x;
-    if (ii >= n)
+    int tid = threadIdx.x + blockIdx.x * blockDim.x;
+
+    if (tid >= n)
         return;
 
-    const float* row = &A[(size_t)ii * (size_t)m];
+    const float* row = &A[(size_t)tid * (size_t)m];
     float sum = 0.0f;
     for (int j = 0; j < m; ++j)
         sum += row[j] * x[j];
-    y[ii] = sum;
+    y[tid] = sum;
+}
+
+// Take the square root of the result after calling this kernel
+__global__ void l2_norm(const float* x, int n, float* result)
+{
+    extern __shared__ float sdata[];
+
+    int tid = threadIdx.x;
+    int idx = blockIdx.x * blockDim.x + tid;
+
+    float val = 0.0f;
+    if (idx < n)
+        val = x[idx] * x[idx];
+
+    sdata[tid] = val;
+    __syncthreads();
+
+    // reduction in shared memory
+    for (int s = blockDim.x / 2; s > 0; s >>= 1) {
+        if (tid < s)
+            sdata[tid] += sdata[tid + s];
+        __syncthreads();
+    }
+
+    // one thread per block accumulates
+    if (tid == 0)
+        atomicAdd(result, sdata[0]);
 }
 
 void cpu_matvec(const float* A, int n, int m, const float* x, float* y)
@@ -60,6 +88,8 @@ void cpu_matvec(const float* A, int n, int m, const float* x, float* y)
         y[ii] = sum;
     }
 }
+
+void with_stride
 
 int main(int argc, char** argv)
 {
