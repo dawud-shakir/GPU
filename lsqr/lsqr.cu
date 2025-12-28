@@ -63,8 +63,8 @@ void cpu_matvec(const float* A, int n, int m, const float* x, float* y)
 
 int main(int argc, char** argv)
 {
-    // Problem size (default 1<<20)
-    int n = (argc > 1) ? std::atoi(argv[1]) : (1 << 20);
+    // Problem size (default 1<<10)
+    int n = (argc > 1) ? std::atoi(argv[1]) : (1 << 10);    // 1024
 
     // Host allocations
 
