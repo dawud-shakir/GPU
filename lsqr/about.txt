@@ -1,0 +1,9 @@
+LSQR: 
+
+Least-squares QR
+
+In linear algebra, QR factorization decomposes a matrix (A) into
+the product of an Orthogonal matrix (Q) and an Upper triangular matrix (R) 
+(A = QR). So, 'Q' stands for Orthogonal (columns are
+unit vectors and mutually perpendicular), and 'R' stands
+for Right triangular (upper triangular)

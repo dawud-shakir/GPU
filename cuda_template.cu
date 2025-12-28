@@ -2,8 +2,8 @@
 
  A minimal Colab-ready CUDA C++ template.
 
-Compile: nvcc -O3 -gencode arch=compute_75,code=sm_75 cuda_template.cu -o cuda_template
-Run: ./cuda_template 
+Compile: nvcc -O3 -gencode arch=compute_75,code=sm_75 <cuda file> -o <executable>
+Run: ./<executable>
 */
 
 #include <cuda_runtime.h>

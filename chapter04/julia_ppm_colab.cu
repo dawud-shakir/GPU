@@ -155,6 +155,9 @@ int main(int argc, char** argv) {
     }
 
     CUDA_CHECK(cudaMemcpy(h_rgba, d_rgba, bytes, cudaMemcpyDeviceToHost));
+    
+    CUDA_CHECK(cudaEventDestroy(start));
+    CUDA_CHECK(cudaEventDestroy(stop));
     CUDA_CHECK(cudaFree(d_rgba));
 
     write_ppm_rgb(out, h_rgba, dim);
