@@ -62,7 +62,7 @@ __global__ void sumsq(const float* x, int n, float* result)
     int tid = threadIdx.x;
     int idx = blockIdx.x * blockDim.x + tid;
 
-cuda::atomic_ref<float, cuda::thread_scope_device> result_ref(result);
+cuda::atomic_ref<float, cuda::thread_scope_device> result_ref(*result);
 // if (tid < n)    
 //     result_ref.fetch_add(x[tid]);
 
