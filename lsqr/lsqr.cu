@@ -14,6 +14,7 @@ Run: ./<executable>
 #include <cstdint>
 #include <vector>
 #include <cuda_runtime.h>
+#include <cuda/atomic>
 
 #define CUDA_CHECK(call)                                                  \
     do {                                                                  \
