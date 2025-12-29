@@ -117,7 +117,22 @@ cuda::atomic_ref<float, cuda::thread_scope_device> result_ref(*result);
 //         atomicAdd(sumsq_out, sdata[0]);
 // }
 
+inline int getBlockSize(int n, int threads)
+{
+    threads = 256;
 
+    cudaDeviceProp prop;
+    CUDA_CHECK(cudaGetDeviceProperties(&prop, 0));
+    int SM = prop.multiProcessorCount;
+
+    // enough blocks to cover n at least once:
+    int blocks_for_coverage = (n + threads - 1) / threads;
+
+    // “keep GPU busy” target:
+    int blocks_for_gpu = 8 * SM;  // try 4*SM, 8*SM
+
+    return std::min(blocks_for_coverage, blocks_for_gpu);
+}
 
 float gpu_norm(const float* d_x, int n)
 {
@@ -208,22 +223,7 @@ __global__ void smem_cuda_transpose(int m,
 
 } /* end smem_cuda_transpose */
 
-inline int getBlockSize(int n, int threads)
-{
-    threads = 256;
 
-    cudaDeviceProp prop;
-    CUDA_CHECK(cudaGetDeviceProperties(&prop, 0));
-    int SM = prop.multiProcessorCount;
-
-    // enough blocks to cover n at least once:
-    int blocks_for_coverage = (n + threads - 1) / threads;
-
-    // “keep GPU busy” target:
-    int blocks_for_gpu = 8 * SM;  // try 4*SM, 8*SM
-
-    return std::min(blocks_for_coverage, blocks_for_gpu);
-}
 
 int main(int argc, char** argv)
 {
