@@ -53,10 +53,17 @@ __global__ void gpu_matvec(const float* A, int n, int m, const float* x, float* 
 
 __global__ void sumsq(const float* x, int n, float* result)
 {
+   
+
+
     extern __shared__ float sdata[];
 
     int tid = threadIdx.x;
     int idx = blockIdx.x * blockDim.x + tid;
+
+cuda::atomic_ref<float, cuda::thread_scope_device> result_ref(result);
+if (tid < n)    
+    result_ref.fetch_add(x[tid])
 
     float val = 0.0f;
     if (idx < n)
@@ -109,22 +116,7 @@ __global__ void sumsq(const float* x, int n, float* result)
 //         atomicAdd(sumsq_out, sdata[0]);
 // }
 
-int getBlockSize(int n, int threads)
-{
-    threads = 256;
 
-    cudaDeviceProp prop;
-    CUDA_CHECK(cudaGetDeviceProperties(&prop, 0));
-    int SM = prop.multiProcessorCount;
-
-    // enough blocks to cover n at least once:
-    int blocks_for_coverage = (n + threads - 1) / threads;
-
-    // “keep GPU busy” target:
-    int blocks_for_gpu = 8 * SM;  // try 4*SM, 8*SM
-
-    return min(blocks_for_coverage, blocks_for_gpu);
-}
 
 float gpu_norm(const float* d_x, int n)
 {
@@ -165,6 +157,55 @@ void cpu_matvec(const float* A, int n, int m, const float* x, float* y)
         y[ii] = sum;
     }
 }
+
+/* definitions of thread block size in X and Y directions */
+
+#define THREADS_PER_BLOCK_X 32
+#define THREADS_PER_BLOCK_Y 32
+
+/* macro to index a 1D memory array with 2D indices in column-major order */
+/* ld is the leading dimension, i.e. the number of rows in the matrix     */
+
+#define INDX( row, col, ld ) ( ( (col) * (ld) ) + (row) )
+
+/* CUDA kernel for shared memory matrix transpose */
+
+__global__ void smem_cuda_transpose(int m,
+                                    float *a,
+                                    float *c )
+{
+
+    /* declare a statically allocated shared memory array */
+
+    __shared__ float smemArray[32][32];
+
+    /* determine my row and column indices for the error checking code */
+
+    const int myRow = blockDim.x * blockIdx.x + threadIdx.x;
+    const int myCol = blockDim.y * blockIdx.y + threadIdx.y;
+
+    /* determine my row tile and column tile index */
+
+    const int tileX = blockDim.x * blockIdx.x;
+    const int tileY = blockDim.y * blockIdx.y;
+
+    if( myRow < m && myCol < m )
+    {
+        /* read from global memory into shared memory array */
+        smemArray[threadIdx.x][threadIdx.y] = a[INDX( tileX + threadIdx.x, tileY + threadIdx.y, m )];
+    } /* end if */
+
+    /* synchronize the threads in the thread block */
+    __syncthreads();
+
+    if( myRow < m && myCol < m )
+    {
+        /* write the result from shared memory to global memory */
+        c[INDX( tileY + threadIdx.x, tileX + threadIdx.y, m )] = smemArray[threadIdx.y][threadIdx.x];
+    } /* end if */
+    return;
+
+} /* end smem_cuda_transpose */
 
 int main(int argc, char** argv)
 {

@@ -2,6 +2,10 @@
 
  A minimal Colab-ready CUDA C++ template.
 
+Colab CUDA Device:
+  Name: Tesla T4
+  Compute Capability: 7.5
+
 Compile: nvcc -O3 -gencode arch=compute_75,code=sm_75 <cuda file> -o <executable>
 Run: ./<executable>
 */
