@@ -127,14 +127,14 @@ void call_transpose_slow(int width, int height, const float* __restrict__ input,
 }
 
 
-void call_transpose_fast(int n, const float* __restrict__ input, float* __restrict__ output)
+void call_transpose_fast(int n, const float* a, float* c)
 {
     // Kernel launch config
     int threads = 256;
     int blocks = (n + threads - 1) / threads;
 
     // Warmup
-    transpose_fast<<<blocks, threads>>>(n, input, output);
+    transpose_fast<<<blocks, threads>>>(n, a, c);
     CUDA_CHECK(cudaGetLastError());
     CUDA_CHECK(cudaDeviceSynchronize());
 
@@ -146,7 +146,7 @@ void call_transpose_fast(int n, const float* __restrict__ input, float* __restri
 
     CUDA_CHECK(cudaEventRecord(start));
     for (int it = 0; it < iters; ++it) {
-        transpose_fast<<<blocks, threads>>>(n, input, output);
+        transpose_fast<<<blocks, threads>>>(n, a, c);
     }
     CUDA_CHECK(cudaEventRecord(stop));
     CUDA_CHECK(cudaEventSynchronize(stop));
