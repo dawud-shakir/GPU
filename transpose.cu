@@ -39,10 +39,7 @@ __global__ void transpose_slow(const float* __restrict__ input,
     }
 }
 
-/* definitions of thread block size in X and Y directions */
 
-#define THREADS_PER_BLOCK_X 32
-#define THREADS_PER_BLOCK_Y 32
 
 /* macro to index a 1D memory array with 2D indices in column-major order */
 /* ld is the leading dimension, i.e. the number of rows in the matrix     */
@@ -51,7 +48,7 @@ __global__ void transpose_slow(const float* __restrict__ input,
 
 
 // CUDA kernel for naive matrix transpose
-__global__ void transpose_fast(int m, float *a, float *c )
+__global__ void transpose_fast(int m, const float* a, float* c )
 {
     int myCol = blockDim.x * blockIdx.x + threadIdx.x;
     int myRow = blockDim.y * blockIdx.y + threadIdx.y;
@@ -65,48 +62,52 @@ __global__ void transpose_fast(int m, float *a, float *c )
 
 /* CUDA kernel for shared memory matrix transpose */
 
-// __global__ void transpose_fast( int m,
-//                                 float *a,
-//                                 float *c )
-// {
+/* definitions of thread block size in X and Y directions */
 
-//     /* declare a statically allocated shared memory array */
+// #define THREADS_PER_BLOCK_X 32
+// #define THREADS_PER_BLOCK_Y 32
+__global__ void transpose_fast( int m,
+                                float *a,
+                                float *c )
+{
 
-//     __shared__ float smemArray[32][32];
+    /* declare a statically allocated shared memory array */
 
-//     /* determine my row and column indices for the error checking code */
+    __shared__ float smemArray[32][32];
 
-//     const int myRow = blockDim.x * blockIdx.x + threadIdx.x;
-//     const int myCol = blockDim.y * blockIdx.y + threadIdx.y;
+    /* determine my row and column indices for the error checking code */
 
-//     /* determine my row tile and column tile index */
+    const int myRow = blockDim.x * blockIdx.x + threadIdx.x;
+    const int myCol = blockDim.y * blockIdx.y + threadIdx.y;
 
-//     const int tileX = blockDim.x * blockIdx.x;
-//     const int tileY = blockDim.y * blockIdx.y;
+    /* determine my row tile and column tile index */
 
-//     if( myRow < m && myCol < m )
-//     {
-//         /* read from global memory into shared memory array */
-//         smemArray[threadIdx.x][threadIdx.y] = a[INDX( tileX + threadIdx.x, tileY + threadIdx.y, m )];
-//     } /* end if */
+    const int tileX = blockDim.x * blockIdx.x;
+    const int tileY = blockDim.y * blockIdx.y;
 
-//     /* synchronize the threads in the thread block */
-//     __syncthreads();
+    if( myRow < m && myCol < m )
+    {
+        /* read from global memory into shared memory array */
+        smemArray[threadIdx.x][threadIdx.y] = a[INDX( tileX + threadIdx.x, tileY + threadIdx.y, m )];
+    } /* end if */
 
-//     if( myRow < m && myCol < m )
-//     {
-//         /* write the result from shared memory to global memory */
-//         c[INDX( tileY + threadIdx.x, tileX + threadIdx.y, m )] = smemArray[threadIdx.y][threadIdx.x];
-//     } /* end if */
-//     return;
+    /* synchronize the threads in the thread block */
+    __syncthreads();
 
-// } /* end transpose_fast */
+    if( myRow < m && myCol < m )
+    {
+        /* write the result from shared memory to global memory */
+        c[INDX( tileY + threadIdx.x, tileX + threadIdx.y, m )] = smemArray[threadIdx.y][threadIdx.x];
+    } /* end if */
+    return;
+
+} /* end transpose_fast */
 
 
 void call_transpose_fast(int n, float* a, float* c)
 {
     // Kernel launch config
-    int threads = 1024;
+    int threads = 32;   // 32 threads per block x AND 32 threads per block y
     int blocks = (n + threads - 1) / threads;
 
     // Warmup
