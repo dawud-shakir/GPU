@@ -47,18 +47,18 @@ __global__ void transpose_slow(const float* __restrict__ input,
 #define INDX( row, col, ld ) ( ( (col) * (ld) ) + (row) )
 
 
-// CUDA kernel for naive matrix transpose
-__global__ void transpose_fast(int m, const float* a, float* c )
-{
-    int myCol = blockDim.x * blockIdx.x + threadIdx.x;
-    int myRow = blockDim.y * blockIdx.y + threadIdx.y;
+// // CUDA kernel for naive matrix transpose
+// __global__ void transpose_fast(int m, const float* a, float* c )
+// {
+//     int myCol = blockDim.x * blockIdx.x + threadIdx.x;
+//     int myRow = blockDim.y * blockIdx.y + threadIdx.y;
 
-    if( myRow < m && myCol < m )
-    {
-        c[INDX( myCol, myRow, m )] = a[INDX( myRow, myCol, m )];
-    } /* end if */
-    return;
-} // end naive_cuda_transpose
+//     if( myRow < m && myCol < m )
+//     {
+//         c[INDX( myCol, myRow, m )] = a[INDX( myRow, myCol, m )];
+//     } /* end if */
+//     return;
+// } // end naive_cuda_transpose
 
 /* CUDA kernel for shared memory matrix transpose */
 
