@@ -215,8 +215,9 @@ int main(int argc, char** argv)
     CUDA_CHECK(cudaMemcpy(d_AT, A_T, n * n * sizeof(float), cudaMemcpyHostToDevice));
 
     // Time transposes
+    call_transpose_fast(n, d_A, d_AT);
     call_transpose_slow(n, n, d_A, d_AT);
-    call_transpose_fast(n * n, d_A, d_AT);
+
 
     // Cleanup
 
