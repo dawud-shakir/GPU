@@ -126,6 +126,44 @@ void call_transpose_slow(int width, int height, const float* __restrict__ input,
     CUDA_CHECK(cudaEventDestroy(stop));
 }
 
+
+void call_transpose_fast(int n, const float* __restrict__ input, float* __restrict__ output)
+{
+    // Kernel launch config
+    int threads = 256;
+    int blocks = (n + threads - 1) / threads;
+
+    // Warmup
+    transpose_fast<<<blocks, threads>>>(n, input, output);
+    CUDA_CHECK(cudaGetLastError());
+    CUDA_CHECK(cudaDeviceSynchronize());
+
+    // Timed runs
+    const int iters = 50;
+    cudaEvent_t start, stop;
+    CUDA_CHECK(cudaEventCreate(&start));
+    CUDA_CHECK(cudaEventCreate(&stop));
+
+    CUDA_CHECK(cudaEventRecord(start));
+    for (int it = 0; it < iters; ++it) {
+        transpose_fast<<<blocks, threads>>>(n, input, output);
+    }
+    CUDA_CHECK(cudaEventRecord(stop));
+    CUDA_CHECK(cudaEventSynchronize(stop));
+    CUDA_CHECK(cudaGetLastError());
+
+    printf("Completed %d iterations.\n", iters);
+    float ms = 0.0f;
+    CUDA_CHECK(cudaEventElapsedTime(&ms, start, stop));
+    float ms_per = ms / iters;
+    printf("%s (n=%d): %.3f ms (%.3f ms per run)\n",
+           __func__, n, ms, ms_per);
+
+    CUDA_CHECK(cudaEventDestroy(start));
+    CUDA_CHECK(cudaEventDestroy(stop));
+}
+
+
 int main(int argc, char** argv)
 {
     // Problem size (default 1<<10)
@@ -154,8 +192,9 @@ int main(int argc, char** argv)
     CUDA_CHECK(cudaMemcpy(d_A, A, n * n * sizeof(float), cudaMemcpyHostToDevice));
     CUDA_CHECK(cudaMemcpy(d_AT, A_T, n * n * sizeof(float), cudaMemcpyHostToDevice));
 
-    // Time transpose_slow
+    // Time transposes
     call_transpose_slow(n, n, d_A, d_AT);
+    call_transpose_fast(n, d_A, d_AT);
 
     // Cleanup
 
