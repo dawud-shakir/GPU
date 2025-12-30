@@ -107,7 +107,12 @@ __global__ void transpose_fast( int m,
 void call_transpose_fast(int n, float* a, float* c)
 {
     // Kernel launch config
-    int threads = 32;   // 32 threads per block x AND 32 threads per block y
+    // int threads = 32;   // 32 threads per block x AND 32 threads per block y
+
+    dim2 threads(32, 32);
+    dim2 blocks( (n + threadsPerBlock.x - 1) / threadsPerBlock.x,
+                       (n + threadsPerBlock.y - 1) / threadsPerBlock.y );
+
     int blocks = (n + threads - 1) / threads;
 
     // Warmup
