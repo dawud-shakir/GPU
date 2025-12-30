@@ -52,7 +52,7 @@ __global__ void transpose_slow(const float* __restrict__ input,
 /* CUDA kernel for shared memory matrix transpose */
 
 __global__ void transpose_fast(int m,
-                                    float *a,
+                                    const float *a,
                                     float *c )
 {
 
