@@ -122,6 +122,8 @@ void call_transpose_slow(int width, int height, const float* __restrict__ input,
     printf("%s (n=%d): %.3f ms (%.3f ms per run)\n",
            __func__, n, ms, ms_per);
 
+    CUDA_CHECK(cudaEventDestroy(start));
+    CUDA_CHECK(cudaEventDestroy(stop));
 }
 
 int main(int argc, char** argv)
@@ -156,8 +158,7 @@ int main(int argc, char** argv)
     call_transpose_slow(n, n, d_A, d_AT);
 
     // Cleanup
-    CUDA_CHECK(cudaEventDestroy(start));
-    CUDA_CHECK(cudaEventDestroy(stop));
+
     CUDA_CHECK(cudaFree(d_A));
     CUDA_CHECK(cudaFree(d_AT));
     CUDA_CHECK(cudaFreeHost(A));
