@@ -51,9 +51,9 @@ __global__ void transpose_slow(const float* __restrict__ input,
 
 /* CUDA kernel for shared memory matrix transpose */
 
-__global__ void transpose_fast(int m,
-                                    const float *a,
-                                    float *c )
+__global__ void transpose_fast( int m,
+                                float *a,
+                                float *c )
 {
 
     /* declare a statically allocated shared memory array */
@@ -127,7 +127,7 @@ void call_transpose_slow(int width, int height, const float* __restrict__ input,
 }
 
 
-void call_transpose_fast(int n, const float* a, float* c)
+void call_transpose_fast(int n, float* a, float* c)
 {
     // Kernel launch config
     int threads = 256;
