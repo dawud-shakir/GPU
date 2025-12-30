@@ -92,6 +92,7 @@ __global__ void transpose_fast(int m,
 void call_transpose_slow(int width, int height, const float* __restrict__ input, float* __restrict__ output)
 {
     // Kernel launch config
+    int n = width * height;
     int threads = 256;
     int blocks = (n + threads - 1) / threads;
 
