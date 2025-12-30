@@ -54,17 +54,10 @@ __global__ void gpu_matvec(const float* A, int n, int m, const float* x, float* 
 
 __global__ void sumsq(const float* x, int n, float* result)
 {
-   
-
-
     extern __shared__ float sdata[];
 
     int tid = threadIdx.x;
     int idx = blockIdx.x * blockDim.x + tid;
-
-cuda::atomic_ref<float, cuda::thread_scope_device> result_ref(*result);
-// if (tid < n)    
-//     result_ref.fetch_add(x[tid]);
 
     float val = 0.0f;
     if (idx < n)
@@ -82,7 +75,7 @@ cuda::atomic_ref<float, cuda::thread_scope_device> result_ref(*result);
 
     // one thread per block accumulates
     if (tid == 0)
-        atomicAdd(result, sdata[0]);
+        atomicAdd(result, sdata[0]);    // atomicAdd is the best atomic for accumulation
 }
 
 // __global__ void sumsq_gridstride(const float* __restrict__ x,
