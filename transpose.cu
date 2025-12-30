@@ -152,7 +152,7 @@ void call_transpose_slow(int width, int height, const float* __restrict__ input,
 {
     // Kernel launch config
     int n = width * height;
-    int threadsPerBlock = 256;
+    int threads = 256;
     int blocks = (n + threads - 1) / threads;
 
     // Warmup
