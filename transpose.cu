@@ -110,9 +110,9 @@ void call_transpose_fast(int n, float* a, float* c)
     // int threads = 32;   // 32 threads per block x AND 32 threads per block y
     // int blocks = (n + threads - 1) / threads;
     
-    dim3 threadsPerBlock(32, 32);
-    dim3 blocksPerGrid( ((n * n) + threadsPerBlock.x - 1) / threadsPerBlock.x,
-                       ((n * n) + threadsPerBlock.y - 1) / threadsPerBlock.y );
+    // dim3 threadsPerBlock(32, 32);
+    // dim3 blocksPerGrid( ((n * n) + threadsPerBlock.x - 1) / threadsPerBlock.x,
+    //                    ((n * n) + threadsPerBlock.y - 1) / threadsPerBlock.y );
 
     // int n = width * height;
     int threadsPerBlock = 1024;
