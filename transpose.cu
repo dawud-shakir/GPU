@@ -49,44 +49,96 @@ __global__ void transpose_slow(const float* __restrict__ input,
 
 #define INDX( row, col, ld ) ( ( (col) * (ld) ) + (row) )
 
-/* CUDA kernel for shared memory matrix transpose */
 
-__global__ void transpose_fast( int m,
-                                float *a,
-                                float *c )
+// CUDA kernel for naive matrix transpose
+__global__ void transpose_fast(int m, float *a, float *c )
 {
-
-    /* declare a statically allocated shared memory array */
-
-    __shared__ float smemArray[32][32];
-
-    /* determine my row and column indices for the error checking code */
-
-    const int myRow = blockDim.x * blockIdx.x + threadIdx.x;
-    const int myCol = blockDim.y * blockIdx.y + threadIdx.y;
-
-    /* determine my row tile and column tile index */
-
-    const int tileX = blockDim.x * blockIdx.x;
-    const int tileY = blockDim.y * blockIdx.y;
+    int myCol = blockDim.x * blockIdx.x + threadIdx.x;
+    int myRow = blockDim.y * blockIdx.y + threadIdx.y;
 
     if( myRow < m && myCol < m )
     {
-        /* read from global memory into shared memory array */
-        smemArray[threadIdx.x][threadIdx.y] = a[INDX( tileX + threadIdx.x, tileY + threadIdx.y, m )];
-    } /* end if */
-
-    /* synchronize the threads in the thread block */
-    __syncthreads();
-
-    if( myRow < m && myCol < m )
-    {
-        /* write the result from shared memory to global memory */
-        c[INDX( tileY + threadIdx.x, tileX + threadIdx.y, m )] = smemArray[threadIdx.y][threadIdx.x];
+        c[INDX( myCol, myRow, m )] = a[INDX( myRow, myCol, m )];
     } /* end if */
     return;
+} // end naive_cuda_transpose
 
-} /* end transpose_fast */
+/* CUDA kernel for shared memory matrix transpose */
+
+// __global__ void transpose_fast( int m,
+//                                 float *a,
+//                                 float *c )
+// {
+
+//     /* declare a statically allocated shared memory array */
+
+//     __shared__ float smemArray[32][32];
+
+//     /* determine my row and column indices for the error checking code */
+
+//     const int myRow = blockDim.x * blockIdx.x + threadIdx.x;
+//     const int myCol = blockDim.y * blockIdx.y + threadIdx.y;
+
+//     /* determine my row tile and column tile index */
+
+//     const int tileX = blockDim.x * blockIdx.x;
+//     const int tileY = blockDim.y * blockIdx.y;
+
+//     if( myRow < m && myCol < m )
+//     {
+//         /* read from global memory into shared memory array */
+//         smemArray[threadIdx.x][threadIdx.y] = a[INDX( tileX + threadIdx.x, tileY + threadIdx.y, m )];
+//     } /* end if */
+
+//     /* synchronize the threads in the thread block */
+//     __syncthreads();
+
+//     if( myRow < m && myCol < m )
+//     {
+//         /* write the result from shared memory to global memory */
+//         c[INDX( tileY + threadIdx.x, tileX + threadIdx.y, m )] = smemArray[threadIdx.y][threadIdx.x];
+//     } /* end if */
+//     return;
+
+// } /* end transpose_fast */
+
+
+void call_transpose_fast(int n, float* a, float* c)
+{
+    // Kernel launch config
+    int threads = 1024;
+    int blocks = (n + threads - 1) / threads;
+
+    // Warmup
+    transpose_fast<<<blocks, threads>>>(n, a, c);
+    CUDA_CHECK(cudaGetLastError());
+    CUDA_CHECK(cudaDeviceSynchronize());
+
+    // Timed runs
+    const int iters = 50;
+    cudaEvent_t start, stop;
+    CUDA_CHECK(cudaEventCreate(&start));
+    CUDA_CHECK(cudaEventCreate(&stop));
+
+    CUDA_CHECK(cudaEventRecord(start));
+    for (int it = 0; it < iters; ++it) {
+        transpose_fast<<<blocks, threads>>>(n, a, c);
+    }
+    CUDA_CHECK(cudaEventRecord(stop));
+    CUDA_CHECK(cudaEventSynchronize(stop));
+    CUDA_CHECK(cudaGetLastError());
+
+    printf("Completed %d iterations.\n", iters);
+    float ms = 0.0f;
+    CUDA_CHECK(cudaEventElapsedTime(&ms, start, stop));
+    float ms_per = ms / iters;
+    printf("%s (n=%d): %.3f ms (%.3f ms per run)\n",
+           __func__, n, ms, ms_per);
+
+    CUDA_CHECK(cudaEventDestroy(start));
+    CUDA_CHECK(cudaEventDestroy(stop));
+}
+
 
 
 void call_transpose_slow(int width, int height, const float* __restrict__ input, float* __restrict__ output)
@@ -110,43 +162,6 @@ void call_transpose_slow(int width, int height, const float* __restrict__ input,
     CUDA_CHECK(cudaEventRecord(start));
     for (int it = 0; it < iters; ++it) {
         transpose_slow<<<blocks, threads>>>(input, output, width, height);
-    }
-    CUDA_CHECK(cudaEventRecord(stop));
-    CUDA_CHECK(cudaEventSynchronize(stop));
-    CUDA_CHECK(cudaGetLastError());
-
-    printf("Completed %d iterations.\n", iters);
-    float ms = 0.0f;
-    CUDA_CHECK(cudaEventElapsedTime(&ms, start, stop));
-    float ms_per = ms / iters;
-    printf("%s (n=%d): %.3f ms (%.3f ms per run)\n",
-           __func__, n, ms, ms_per);
-
-    CUDA_CHECK(cudaEventDestroy(start));
-    CUDA_CHECK(cudaEventDestroy(stop));
-}
-
-
-void call_transpose_fast(int n, float* a, float* c)
-{
-    // Kernel launch config
-    int threads = 1024;
-    int blocks = (n + threads - 1) / threads;
-
-    // Warmup
-    transpose_fast<<<blocks, threads>>>(n, a, c);
-    CUDA_CHECK(cudaGetLastError());
-    CUDA_CHECK(cudaDeviceSynchronize());
-
-    // Timed runs
-    const int iters = 50;
-    cudaEvent_t start, stop;
-    CUDA_CHECK(cudaEventCreate(&start));
-    CUDA_CHECK(cudaEventCreate(&stop));
-
-    CUDA_CHECK(cudaEventRecord(start));
-    for (int it = 0; it < iters; ++it) {
-        transpose_fast<<<blocks, threads>>>(n, a, c);
     }
     CUDA_CHECK(cudaEventRecord(stop));
     CUDA_CHECK(cudaEventSynchronize(stop));
