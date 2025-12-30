@@ -116,7 +116,7 @@ void call_transpose_fast(int n, float* a, float* c)
 
     // int n = width * height;
     int threadsPerBlock = 1024;
-    int blocks = (n + threads - 1) / threads;
+    int blocksPerGrid = (n + threadsPerBlock - 1) / threadsPerBlock;
 
     // Warmup
     transpose_fast<<<blocksPerGrid, threadsPerBlock>>>(n, a, c);
