@@ -73,7 +73,7 @@ __global__ void transpose_fast( int m,
     if( myRow < m && myCol < m )
     {
         /* read from global memory into shared memory array */
-        smemArray[threadIdx.x][threadIdx.y] = a[INDX( tileX + threadIdx.x, tileY + threadIdx.y, m )];
+        // smemArray[threadIdx.x][threadIdx.y] = a[INDX( tileX + threadIdx.x, tileY + threadIdx.y, m )];
     } /* end if */
 
     /* synchronize the threads in the thread block */
@@ -82,7 +82,7 @@ __global__ void transpose_fast( int m,
     if( myRow < m && myCol < m )
     {
         /* write the result from shared memory to global memory */
-        // c[INDX( tileY + threadIdx.x, tileX + threadIdx.y, m )] = smemArray[threadIdx.y][threadIdx.x];
+        c[INDX( tileY + threadIdx.x, tileX + threadIdx.y, m )] = smemArray[threadIdx.y][threadIdx.x];
     } /* end if */
     return;
 
