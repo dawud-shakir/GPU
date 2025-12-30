@@ -110,7 +110,7 @@ void call_transpose_fast(int n, float* a, float* c)
     // int threads = 32;   // 32 threads per block x AND 32 threads per block y
     // int blocks = (n + threads - 1) / threads;
     
-    dim3 threadsPerBlock(8, 8);
+    dim3 threadsPerBlock(32, 32);
     dim3 blocksPerGrid( (n + threadsPerBlock.x - 1) / threadsPerBlock.x,
                        (n + threadsPerBlock.y - 1) / threadsPerBlock.y );
 
@@ -152,12 +152,11 @@ void call_transpose_slow(int width, int height, const float* __restrict__ input,
 {
     // Kernel launch config
     int n = width * height;
-    dim3 threadsPerBlock(8, 8);
-    dim3 blocksPerGrid( (n + threadsPerBlock.x - 1) / threadsPerBlock.x,
-                       (n + threadsPerBlock.y - 1) / threadsPerBlock.y );
+    int threads = 256;
+    int blocks = (n + threads - 1) / threads;
 
     // Warmup
-    transpose_slow<<<blocksPerGrid, threadsPerBlock>>>(input, output, width, height);
+    transpose_slow<<<blocks, threads>>>(input, output, width, height);
     CUDA_CHECK(cudaGetLastError());
     CUDA_CHECK(cudaDeviceSynchronize());
 
@@ -169,7 +168,7 @@ void call_transpose_slow(int width, int height, const float* __restrict__ input,
 
     CUDA_CHECK(cudaEventRecord(start));
     for (int it = 0; it < iters; ++it) {
-        transpose_slow<<<blocksPerGrid, threadsPerBlock>>>(input, output, width, height);
+        transpose_slow<<<blocks, threads>>>(input, output, width, height);
     }
     CUDA_CHECK(cudaEventRecord(stop));
     CUDA_CHECK(cudaEventSynchronize(stop));
