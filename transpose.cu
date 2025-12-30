@@ -130,7 +130,7 @@ void call_transpose_slow(int width, int height, const float* __restrict__ input,
 void call_transpose_fast(int n, float* a, float* c)
 {
     // Kernel launch config
-    int threads = 256;
+    int threads = 1024;
     int blocks = (n + threads - 1) / threads;
 
     // Warmup
