@@ -111,13 +111,13 @@ void call_transpose_fast(int n, float* a, float* c)
     // int blocks = (n + threads - 1) / threads;
     
     dim3 threadsPerBlock(32, 32);
-    dim3 numBlocks( (n + threadsPerBlock.x - 1) / threadsPerBlock.x,
+    dim3 blocksPerGrid( (n + threadsPerBlock.x - 1) / threadsPerBlock.x,
                        (n + threadsPerBlock.y - 1) / threadsPerBlock.y );
 
 
 
     // Warmup
-    transpose_fast<<<numBlocks, threadsPerBlock>>>(n, a, c);
+    transpose_fast<<<blocksPerGrid, threadsPerBlock>>>(n, a, c);
     CUDA_CHECK(cudaGetLastError());
     CUDA_CHECK(cudaDeviceSynchronize());
 
@@ -129,7 +129,7 @@ void call_transpose_fast(int n, float* a, float* c)
 
     CUDA_CHECK(cudaEventRecord(start));
     for (int it = 0; it < iters; ++it) {
-        transpose_fast<<<numBlocks, threadsPerBlock>>>(n, a, c);
+        transpose_fast<<<blocksPerGrid, threadsPerBlock>>>(n, a, c);
     }
     CUDA_CHECK(cudaEventRecord(stop));
     CUDA_CHECK(cudaEventSynchronize(stop));
@@ -152,11 +152,12 @@ void call_transpose_slow(int width, int height, const float* __restrict__ input,
 {
     // Kernel launch config
     int n = width * height;
-    int threads = 256;
-    int blocks = (n + threads - 1) / threads;
+    dim3 threadsPerBlock(32, 32);
+    dim3 blocksPerGrid( (n + threadsPerBlock.x - 1) / threadsPerBlock.x,
+                       (n + threadsPerBlock.y - 1) / threadsPerBlock.y );
 
     // Warmup
-    transpose_slow<<<blocks, threads>>>(input, output, width, height);
+    transpose_slow<<<blocksPerGrid, threadsPerBlock>>>(input, output, width, height);
     CUDA_CHECK(cudaGetLastError());
     CUDA_CHECK(cudaDeviceSynchronize());
 
@@ -168,7 +169,7 @@ void call_transpose_slow(int width, int height, const float* __restrict__ input,
 
     CUDA_CHECK(cudaEventRecord(start));
     for (int it = 0; it < iters; ++it) {
-        transpose_slow<<<blocks, threads>>>(input, output, width, height);
+        transpose_slow<<<blocksPerGrid, threadsPerBlock>>>(input, output, width, height);
     }
     CUDA_CHECK(cudaEventRecord(stop));
     CUDA_CHECK(cudaEventSynchronize(stop));
