@@ -189,6 +189,8 @@ void cpu_transpose(const float* A, int n, int m, float* AT)
             AT[j * n + i] = A[i * m + j];
 }
 
+#define STR1(x) #x
+#define STR(x)  STR1(x)
 #define FUNCTION_NAME gpu_transpose_2
 
 int main(int argc, char** argv)
@@ -241,7 +243,7 @@ int main(int argc, char** argv)
     CUDA_CHECK(cudaEventElapsedTime(&ms, start, stop));
     float ms_per = ms / iters;
     printf("%s (n=%d): %.3f ms (%.3f ms per run)\n",
-        #FUNCTION_NAME, n, ms, ms_per);
+        STR(FUNCTION_NAME), n, ms, ms_per);
 
     CUDA_CHECK(cudaEventDestroy(start));
     CUDA_CHECK(cudaEventDestroy(stop));
