@@ -181,9 +181,9 @@ __global__ void gpu_transpose_2(const float* a, int n, int m, float* c)
 
 void cpu_transpose(const double* A, int n, int m, double* AT)
 {
-    for (int i = 0; i < rows; ++i)
-        for (int j = 0; j < cols; ++j)
-            AT[j * rows + i] = A[i * cols + j];
+    for (int i = 0; i < n; ++i)
+        for (int j = 0; j < m; ++j)
+            AT[j * n + i] = A[i * m + j];
 }
 
 int main(int argc, char** argv)
