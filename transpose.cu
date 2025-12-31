@@ -241,7 +241,7 @@ int main(int argc, char** argv)
     CUDA_CHECK(cudaEventElapsedTime(&ms, start, stop));
     float ms_per = ms / iters;
     printf("%s (n=%d): %.3f ms (%.3f ms per run)\n",
-        __func__, n, ms, ms_per);
+        #FUNCTION_NAME, n, ms, ms_per);
 
     CUDA_CHECK(cudaEventDestroy(start));
     CUDA_CHECK(cudaEventDestroy(stop));
