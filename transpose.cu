@@ -40,15 +40,8 @@ __global__ void gpu_transpose_1(const float* __restrict__ A,
     int ty = blockIdx.y * blockDim.y + threadIdx.y;
 
     if (ty < n && tx < m) {
-        // int input_idx = ty * m + tx;
-        // int output_idx = tx * n + ty;
-        // A_T[output_idx] = A[input_idx];
-
-        // Why is macro is 0.8 ms faster than in-place calculation?
-        // A_T[INDX(tx, ty, n)] = A[INDX(ty, tx, m)];
-
-        A_T[tx * m + ty] = A[ty * n + tx];  // non-strided access (faster)
-        // A_T[ty * n + tx] = A[tx * m + ty];  // non-strided access (faster)
+        // A_T[tx * m + ty] = A[ty * n + tx];  // strided access
+        A_T[ty * n + tx] = A[tx * m + ty];  // coalesced/non-strided access (faster)
     }
     return;
 }
@@ -69,44 +62,44 @@ __global__ void gpu_transpose_2(const float* A, int n, int m, float* A_T)
 /* CUDA kernel for shared memory matrix transpose */
 
 /* definitions of thread block size in X and Y directions */
-// #define THREADS_PER_BLOCK_X 32
-// #define THREADS_PER_BLOCK_Y 32
-// __global__ void gpu_transpose_tiled( const float* a, 
-//                                 int m,
-//                                 float *c )
-// {
+#define THREADS_PER_BLOCK_X 32
+#define THREADS_PER_BLOCK_Y 32
+__global__ void gpu_transpose_tiled( const float* a, 
+                                int m,
+                                float *c )
+{
 
-//     /* declare a statically allocated shared memory array */
+    /* declare a statically allocated shared memory array */
 
-//     __shared__ float smemArray[32][32];
+    __shared__ float smemArray[16][16];
 
-//     /* determine my row and column indices for the error checking code */
+    /* determine my row and column indices for the error checking code */
 
-//     const int myRow = blockDim.x * blockIdx.x + threadIdx.x;
-//     const int myCol = blockDim.y * blockIdx.y + threadIdx.y;
+    const int myRow = blockDim.x * blockIdx.x + threadIdx.x;
+    const int myCol = blockDim.y * blockIdx.y + threadIdx.y;
 
-//     /* determine my row tile and column tile index */
+    /* determine my row tile and column tile index */
 
-//     const int tileX = blockDim.x * blockIdx.x;
-//     const int tileY = blockDim.y * blockIdx.y;
+    const int tileX = blockDim.x * blockIdx.x;
+    const int tileY = blockDim.y * blockIdx.y;
 
-//     if( myRow < m && myCol < m )
-//     {
-//         /* read from global memory into shared memory array */
-//         smemArray[threadIdx.x][threadIdx.y] = a[INDX( tileX + threadIdx.x, tileY + threadIdx.y, m )];
-//     } /* end if */
+    if( myRow < m && myCol < m )
+    {
+        /* read from global memory into shared memory array */
+        smemArray[threadIdx.x][threadIdx.y] = a[INDX( tileX + threadIdx.x, tileY + threadIdx.y, m )];
+    } /* end if */
 
-//     /* synchronize the threads in the thread block */
-//     __syncthreads();
+    /* synchronize the threads in the thread block */
+    __syncthreads();
 
-//     if( myRow < m && myCol < m )
-//     {
-//         /* write the result from shared memory to global memory */
-//         c[INDX( tileY + threadIdx.x, tileX + threadIdx.y, m )] = smemArray[threadIdx.y][threadIdx.x];
-//     } /* end if */
-//     return;
+    if( myRow < m && myCol < m )
+    {
+        /* write the result from shared memory to global memory */
+        c[INDX( tileY + threadIdx.x, tileX + threadIdx.y, m )] = smemArray[threadIdx.y][threadIdx.x];
+    } /* end if */
+    return;
 
-// } /* end gpu_transpose_tiled */
+
 
 // void call_transpose_fast(int n, float* a, float* c)
 // {
@@ -223,7 +216,7 @@ int main(int argc, char** argv)
     dim3 blocks((n + threads.x - 1) / threads.x, (m + threads.y - 1) / threads.y);
 
     // Warmup
-    gpu_transpose_1<<<blocks, threads>>>(A, n, m, gpu_result);
+    gpu_transpose_tiled<<<blocks, threads>>>(A, n, gpu_result);
     CUDA_CHECK(cudaGetLastError());
     CUDA_CHECK(cudaDeviceSynchronize());
 
@@ -235,7 +228,7 @@ int main(int argc, char** argv)
 
     CUDA_CHECK(cudaEventRecord(start));
     for (int it = 0; it < iters; ++it) {
-        gpu_transpose_1<<<blocks, threads>>>(A, n, m, gpu_result);
+        gpu_transpose_tiled<<<blocks, threads>>>(A, n, gpu_result);
     }
     CUDA_CHECK(cudaEventRecord(stop));
     CUDA_CHECK(cudaEventSynchronize(stop));
