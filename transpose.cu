@@ -191,7 +191,10 @@ void cpu_transpose(const float* A, int n, int m, float* AT)
 
 #define STR1(x) #x
 #define STR(x)  STR1(x)
-#define FUNCTION_NAME gpu_transpose_2
+
+#ifndef FUNCTION_NAME
+#define FUNCTION_NAME gpu_transpose_tiled
+#endif
 
 int main(int argc, char** argv)
 {
