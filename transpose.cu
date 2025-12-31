@@ -52,7 +52,8 @@ __global__ void gpu_transpose_2(const float* __restrict__ a, int n, int m, float
     int myRow = blockDim.y * blockIdx.y + threadIdx.y;
 
     if (myRow < n && myCol < m) {
-        c[INDX(myCol, myRow, n)] = a[INDX(myRow, myCol, m)];
+        // c[INDX(myCol, myRow, n)] = a[INDX(myRow, myCol, m)];
+        c[myCol * n + myRow] = a[myRow * m + myCol];
     } /* end if */
     // return;
 } // end naive_cuda_transpose
