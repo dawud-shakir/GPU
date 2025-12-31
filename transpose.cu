@@ -216,7 +216,7 @@ int main(int argc, char** argv)
     dim3 blocks((n + threads.x - 1) / threads.x, (m + threads.y - 1) / threads.y);
 
     // Warmup
-    gpu_transpose_tiled<<<blocks, threads>>>(A, n, gpu_result);
+    gpu_transpose_2<<<blocks, threads>>>(A, n, gpu_result);
     CUDA_CHECK(cudaGetLastError());
     CUDA_CHECK(cudaDeviceSynchronize());
 
@@ -228,7 +228,7 @@ int main(int argc, char** argv)
 
     CUDA_CHECK(cudaEventRecord(start));
     for (int it = 0; it < iters; ++it) {
-        gpu_transpose_tiled<<<blocks, threads>>>(A, n, gpu_result);
+        gpu_transpose_2<<<blocks, threads>>>(A, n, gpu_result);
     }
     CUDA_CHECK(cudaEventRecord(stop));
     CUDA_CHECK(cudaEventSynchronize(stop));
