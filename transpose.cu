@@ -34,9 +34,9 @@ __global__ void gpu_transpose_1(const float* __restrict__ A,
     int ty = blockIdx.y * blockDim.y + threadIdx.y;
 
     if (ty < n && tx < m) {
-        int input_idx = ty * m + tx;
-        int output_idx = tx * n + ty;
-        A_T[output_idx] = A[input_idx];
+        // int input_idx = ty * m + tx;
+        // int output_idx = tx * n + ty;
+        A_T[tx * n + ty] = A[ty * m + tx];
     }
 }
 
