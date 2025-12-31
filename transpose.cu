@@ -12,6 +12,7 @@ Run: ./<executable>
 #include <cstdint>
 #include <cstdio>
 #include <cstdlib>
+#include <cstring>  // memset
 #include <cuda/atomic>
 #include <cuda_runtime.h>
 #include <vector>
@@ -179,7 +180,7 @@ __global__ void gpu_transpose_2(const float* a, int n, int m, float* c)
 //     CUDA_CHECK(cudaEventDestroy(stop));
 // }
 
-void cpu_transpose(const double* A, int n, int m, double* AT)
+void cpu_transpose(const float* A, int n, int m, float* AT)
 {
     for (int i = 0; i < n; ++i)
         for (int j = 0; j < m; ++j)
