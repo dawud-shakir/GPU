@@ -71,7 +71,7 @@ __global__ void gpu_transpose_tiled( const float* a,
 
     /* declare a statically allocated shared memory array */
 
-    __shared__ float smemArray[THREADS_PER_BLOCK_X][THREADS_PER_BLOCK_Y];
+    __shared__ float smemArray[THREADS_PER_BLOCK_X][THREADS_PER_BLOCK_Y+1];
 
     /* determine my row and column indices for the error checking code */
 
