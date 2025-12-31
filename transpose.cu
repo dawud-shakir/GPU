@@ -47,7 +47,8 @@ __global__ void gpu_transpose_1(const float* __restrict__ A,
         // Why is macro is 0.8 ms faster than in-place calculation?
         // A_T[INDX(tx, ty, n)] = A[INDX(ty, tx, m)];
 
-        A_T[ty * n + tx] = A[tx * m + ty];
+        A_T[tx * m + ty] = A[ty * n + tx];  // non-strided access (faster)
+        // A_T[ty * n + tx] = A[tx * m + ty];  // non-strided access (faster)
     }
     return;
 }
