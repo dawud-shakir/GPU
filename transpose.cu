@@ -71,7 +71,7 @@ __global__ void gpu_transpose_tiled( const float* a,
 
     /* declare a statically allocated shared memory array */
 
-    __shared__ float smemArray[16][16];
+    __shared__ float smemArray[THREADS_PER_BLOCK_X][THREADS_PER_BLOCK_Y];
 
     /* determine my row and column indices for the error checking code */
 
@@ -216,7 +216,7 @@ int main(int argc, char** argv)
     std::memset(gpu_result, 0, m * n * sizeof(float));
 
     // Kernel launch config
-    dim3 threads(16, 16);
+    dim3 threads(THREADS_PER_BLOCK_X, THREADS_PER_BLOCK_Y);
     dim3 blocks((n + threads.x - 1) / threads.x, (m + threads.y - 1) / threads.y);
 
     // Warmup
