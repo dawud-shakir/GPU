@@ -65,7 +65,7 @@ __global__ void gpu_transpose_2(const float* A, int n, int m, float* A_T)
 #define THREADS_PER_BLOCK_X 32
 #define THREADS_PER_BLOCK_Y 32
 __global__ void gpu_transpose_tiled( const float* a, 
-                                int m,
+                                int n, int m,
                                 float *c )
 {
 
@@ -83,7 +83,7 @@ __global__ void gpu_transpose_tiled( const float* a,
     const int tileX = blockDim.x * blockIdx.x;
     const int tileY = blockDim.y * blockIdx.y;
 
-    if( myRow < m && myCol < m )
+    if( myRow < n && myCol < m )
     {
         /* read from global memory into shared memory array */
         smemArray[threadIdx.x][threadIdx.y] = a[INDX( tileX + threadIdx.x, tileY + threadIdx.y, m )];
@@ -92,10 +92,10 @@ __global__ void gpu_transpose_tiled( const float* a,
     /* synchronize the threads in the thread block */
     __syncthreads();
 
-    if( myRow < m && myCol < m )
+    if( myRow < n && myCol < m )
     {
         /* write the result from shared memory to global memory */
-        c[INDX( tileY + threadIdx.x, tileX + threadIdx.y, m )] = smemArray[threadIdx.y][threadIdx.x];
+        c[INDX( tileY + threadIdx.x, tileX + threadIdx.y, n )] = smemArray[threadIdx.y][threadIdx.x];
     } /* end if */
     return;
 }
@@ -216,7 +216,7 @@ int main(int argc, char** argv)
     dim3 blocks((n + threads.x - 1) / threads.x, (m + threads.y - 1) / threads.y);
 
     // Warmup
-    gpu_transpose_2<<<blocks, threads>>>(A, n, gpu_result);
+    gpu_transpose_tiled<<<blocks, threads>>>(A, n, m, gpu_result);
     CUDA_CHECK(cudaGetLastError());
     CUDA_CHECK(cudaDeviceSynchronize());
 
@@ -228,7 +228,7 @@ int main(int argc, char** argv)
 
     CUDA_CHECK(cudaEventRecord(start));
     for (int it = 0; it < iters; ++it) {
-        gpu_transpose_2<<<blocks, threads>>>(A, n, gpu_result);
+        gpu_transpose_tiled<<<blocks, threads>>>(A, n, m, gpu_result);
     }
     CUDA_CHECK(cudaEventRecord(stop));
     CUDA_CHECK(cudaEventSynchronize(stop));
