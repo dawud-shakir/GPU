@@ -54,7 +54,7 @@ __global__ void gpu_transpose_2(const float* __restrict__ a, int n, int m, float
     if (myRow < n && myCol < m) {
         c[INDX(myCol, myRow, n)] = a[INDX(myRow, myCol, m)];
     } /* end if */
-    return;
+    // return;
 } // end naive_cuda_transpose
 
 /* CUDA kernel for shared memory matrix transpose */
