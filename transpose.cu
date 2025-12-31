@@ -195,9 +195,9 @@ int main(int argc, char** argv)
 
     // Host allocations
 
-    float *A = nullptr, *A_T = nullptr;
+    float *A = nullptr, *gpu_result = nullptr;
     CUDA_CHECK(cudaMallocManaged(&A, n * m * sizeof(float)));
-    CUDA_CHECK(cudaMallocManaged(&A_T, n * m * sizeof(float)));
+    CUDA_CHECK(cudaMallocManaged(&gpu_result, m * n * sizeof(float)));
 
     // Data
     for (int i = 0; i < n; ++i) {
@@ -207,14 +207,14 @@ int main(int argc, char** argv)
     }
 
     // Zero output matrix
-    std::memset(A_T, 0, n * m * sizeof(float));
+    std::memset(gpu_result, 0, m * n * sizeof(float));
 
     // Kernel launch config
     int threads = 256;
     int blocks = (n + threads - 1) / threads;
 
     // Warmup
-    gpu_transpose_1<<<blocks, threads>>>(A, n, m, A_T);
+    gpu_transpose_1<<<blocks, threads>>>(A, n, m, gpu_result);
     CUDA_CHECK(cudaGetLastError());
     CUDA_CHECK(cudaDeviceSynchronize());
 
@@ -226,7 +226,7 @@ int main(int argc, char** argv)
 
     CUDA_CHECK(cudaEventRecord(start));
     for (int it = 0; it < iters; ++it) {
-        gpu_transpose_1<<<blocks, threads>>>(A, n, m, A_T);
+        gpu_transpose_1<<<blocks, threads>>>(A, n, m, gpu_result);
     }
     CUDA_CHECK(cudaEventRecord(stop));
     CUDA_CHECK(cudaEventSynchronize(stop));
@@ -244,13 +244,13 @@ int main(int argc, char** argv)
 
     // Verify
     float* cpu_result = nullptr;
-    CUDA_CHECK(cudaMallocHost(&cpu_result, n * m * sizeof(float)));
+    CUDA_CHECK(cudaMallocHost(&cpu_result, m * n * sizeof(float)));
     cpu_transpose(A, n, m, cpu_result);
     bool match = true;
-    for (int i = 0; i < n * m; ++i) {
-        if (std::fabs(cpu_result[i] - A_T[i]) > 1e-5) {
+    for (int i = 0; i < m * n; ++i) {
+        if (std::fabs(cpu_result[i] - gpu_result[i]) > 1e-5) {
             match = false;
-            printf("Mismatch at index %d: CPU %f, GPU %f\n", i, cpu_result[i], A_T[i]);
+            printf("Mismatch at index %d: CPU %f, GPU %f\n", i, cpu_result[i], gpu_result[i]);
             break;
         }
     }
@@ -261,9 +261,9 @@ int main(int argc, char** argv)
     }
 
     // Cleanup
-    CUDA_CHECK(cudaFreeHost(cpu_result));
     CUDA_CHECK(cudaFreeHost(A));
-    CUDA_CHECK(cudaFreeHost(A_T));
+    CUDA_CHECK(cudaFreeHost(cpu_result));
+    CUDA_CHECK(cudaFreeHost(gpu_result));
 
     return 0;
 }
