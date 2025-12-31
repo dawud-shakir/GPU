@@ -261,9 +261,9 @@ int main(int argc, char** argv)
     }
 
     // Cleanup
-    CUDA_CHECK(cudaFreeHost(A));
-    CUDA_CHECK(cudaFreeHost(cpu_result));
-    CUDA_CHECK(cudaFreeHost(gpu_result));
+    CUDA_CHECK(cudaFree(A));
+    CUDA_CHECK(cudaFree(cpu_result));
+    CUDA_CHECK(cudaFree(gpu_result));
 
     return 0;
 }
