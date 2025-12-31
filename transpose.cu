@@ -7,14 +7,14 @@ Compile: nvcc -O3 -gencode arch=compute_75,code=sm_75 <cuda file> -o <executable
 Run: ./<executable>
 */
 
+#include <cblas.h> // for verification with cblas_dgemm
 #include <cmath>
+#include <cstdint>
 #include <cstdio>
 #include <cstdlib>
-#include <cstdint>
-#include <vector>
-#include <cblas.h>  // for verification with cblas_dgemm
-#include <cuda_runtime.h>
 #include <cuda/atomic>
+#include <cuda_runtime.h>
+#include <vector>
 
 #define CUDA_CHECK(call)                                                  \
     do {                                                                  \
@@ -26,37 +26,32 @@ Run: ./<executable>
         }                                                                 \
     } while (0)
 
-__global__ void transpose_slow(const float* __restrict__ input,
-                          float* __restrict__ output,
-                          int width, int height)
+__global__ void gpu_transpose_1(const float* __restrict__ A,
+    int n, int m, float* __restrict__ A_T)
 {
-    int x = blockIdx.x * blockDim.x + threadIdx.x;
-    int y = blockIdx.y * blockDim.y + threadIdx.y;  
+    int tx = blockIdx.x * blockDim.x + threadIdx.x;
+    int ty = blockIdx.y * blockDim.y + threadIdx.y;
 
-    if (x < width && y < height) {
-        int input_idx = y * width + x;
-        int output_idx = x * height + y;
-        output[output_idx] = input[input_idx];
+    if (ty < n && tx < m) {
+        int input_idx = ty * m + tx;
+        int output_idx = tx * n + ty;
+        A_T[output_idx] = A[input_idx];
     }
 }
-
-
 
 /* macro to index a 1D memory array with 2D indices in column-major order */
 /* ld is the leading dimension, i.e. the number of rows in the matrix     */
 
-#define INDX( row, col, ld ) ( ( (col) * (ld) ) + (row) )
-
+#define INDX(row, col, ld) (((col) * (ld)) + (row))
 
 // CUDA kernel for naive matrix transpose
-__global__ void transpose_fast(int m, const float* a, float* c )
+__global__ void gpu_transpose_2(const float* a, int n, int m, float* c)
 {
     int myCol = blockDim.x * blockIdx.x + threadIdx.x;
     int myRow = blockDim.y * blockIdx.y + threadIdx.y;
 
-    if( myRow < m && myCol < m )
-    {
-        c[INDX( myCol, myRow, m )] = a[INDX( myRow, myCol, m )];
+    if (myRow < n && myCol < m) {
+        c[INDX(myCol, myRow, n)] = a[INDX(myRow, myCol, m)];
     } /* end if */
     return;
 } // end naive_cuda_transpose
@@ -64,11 +59,10 @@ __global__ void transpose_fast(int m, const float* a, float* c )
 /* CUDA kernel for shared memory matrix transpose */
 
 /* definitions of thread block size in X and Y directions */
-
 // #define THREADS_PER_BLOCK_X 32
 // #define THREADS_PER_BLOCK_Y 32
-// __global__ void transpose_fast( int m,
-//                                 float *a,
+// __global__ void gpu_transpose_tiled( const float* a, 
+//                                 int m,
 //                                 float *c )
 // {
 
@@ -102,15 +96,14 @@ __global__ void transpose_fast(int m, const float* a, float* c )
 //     } /* end if */
 //     return;
 
-// } /* end transpose_fast */
-
+// } /* end gpu_transpose_tiled */
 
 void call_transpose_fast(int n, float* a, float* c)
 {
     // Kernel launch config
     // int threads = 32;   // 32 threads per block x AND 32 threads per block y
     // int blocks = (n + threads - 1) / threads;
-    
+
     // dim3 threadsPerBlock(32, 32);
     // dim3 blocksPerGrid( (n + threadsPerBlock.x - 1) / threadsPerBlock.x,
     //                    (n + threadsPerBlock.y - 1) / threadsPerBlock.y );
@@ -143,13 +136,11 @@ void call_transpose_fast(int n, float* a, float* c)
     CUDA_CHECK(cudaEventElapsedTime(&ms, start, stop));
     float ms_per = ms / iters;
     printf("%s (n=%d): %.3f ms (%.3f ms per run)\n",
-           __func__, n, ms, ms_per);
+        __func__, n, ms, ms_per);
 
     CUDA_CHECK(cudaEventDestroy(start));
     CUDA_CHECK(cudaEventDestroy(stop));
 }
-
-
 
 void call_transpose_slow(int width, int height, const float* __restrict__ input, float* __restrict__ output)
 {
@@ -182,59 +173,94 @@ void call_transpose_slow(int width, int height, const float* __restrict__ input,
     CUDA_CHECK(cudaEventElapsedTime(&ms, start, stop));
     float ms_per = ms / iters;
     printf("%s (n=%d): %.3f ms (%.3f ms per run)\n",
-           __func__, n, ms, ms_per);
+        __func__, n, ms, ms_per);
 
     CUDA_CHECK(cudaEventDestroy(start));
     CUDA_CHECK(cudaEventDestroy(stop));
 }
 
+void cpu_transpose(const double* A, int n, int m, double* AT)
+{
+    for (int i = 0; i < rows; ++i)
+        for (int j = 0; j < cols; ++j)
+            AT[j * rows + i] = A[i * cols + j];
+}
 
 int main(int argc, char** argv)
 {
-    // Problem size (default 1<<10)
-    int n = (argc > 1) ? std::atoi(argv[1]) : (1 << 10);    // 1024
+    // Problem size (default 1024)
+    int n = (argc > 1) ? std::atoi(argv[1]) : 1024;
     int m = n;
 
     // Host allocations
 
-    float *A = nullptr, *A_T = nullptr; 
-    CUDA_CHECK(cudaMallocHost(&A, n * m * sizeof(float)));
-    CUDA_CHECK(cudaMallocHost(&A_T, n * m * sizeof(float)));
+    float *A = nullptr, *A_T = nullptr;
+    CUDA_CHECK(cudaMallocManaged(&A, n * m * sizeof(float)));
+    CUDA_CHECK(cudaMallocManaged(&A_T, n * m * sizeof(float)));
 
-    // Initialize host data
+    // Data
     for (int i = 0; i < n; ++i) {
         for (int j = 0; j < m; ++j) {
             A[i * m + j] = (float)(i * m + j);
-            A_T[j * m + i] = 0.0f;
         }
     }
 
-    // Device allocations
-    float *d_A = nullptr, *d_AT = nullptr;
-    CUDA_CHECK(cudaMalloc(&d_A, n * m * sizeof(float)));
-    CUDA_CHECK(cudaMalloc(&d_AT, n * m * sizeof(float)));
+    // Zero output matrix
+    std::memset(A_T, 0, n * m * sizeof(float));
 
-    // H2D copies
-    CUDA_CHECK(cudaMemcpy(d_A, A, n * m * sizeof(float), cudaMemcpyHostToDevice));
-    CUDA_CHECK(cudaMemcpy(d_AT, A_T, n * m * sizeof(float), cudaMemcpyHostToDevice));
+    // Kernel launch config
+    int threads = 256;
+    int blocks = (n + threads - 1) / threads;
 
-    // Time transposes
-    call_transpose_fast(n, d_A, d_AT);
-    call_transpose_slow(n, m, d_A, d_AT);
+    // Warmup
+    gpu_transpose_1<<<blocks, threads>>>(A, n, m, A_T);
+    CUDA_CHECK(cudaGetLastError());
+    CUDA_CHECK(cudaDeviceSynchronize());
+
+    // Timed runs
+    const int iters = 50;
+    cudaEvent_t start, stop;
+    CUDA_CHECK(cudaEventCreate(&start));
+    CUDA_CHECK(cudaEventCreate(&stop));
+
+    CUDA_CHECK(cudaEventRecord(start));
+    for (int it = 0; it < iters; ++it) {
+        gpu_transpose_1<<<blocks, threads>>>(A, n, m, A_T);
+    }
+    CUDA_CHECK(cudaEventRecord(stop));
+    CUDA_CHECK(cudaEventSynchronize(stop));
+    CUDA_CHECK(cudaGetLastError());
+
+    printf("Completed %d iterations.\n", iters);
+    float ms = 0.0f;
+    CUDA_CHECK(cudaEventElapsedTime(&ms, start, stop));
+    float ms_per = ms / iters;
+    printf("%s (n=%d): %.3f ms (%.3f ms per run)\n",
+        __func__, n, ms, ms_per);
+
+    CUDA_CHECK(cudaEventDestroy(start));
+    CUDA_CHECK(cudaEventDestroy(stop));
 
     // Verify
-    float* cblas_result = nullptr;
-    CUDA_CHECK(cudaMallocHost(&cblas_result, n * m * sizeof(float)));
-     // AT (n x m) = A^T (n x m) * I (m x m)
-    cblas_dgemm(CblasRowMajor, CblasTrans, CblasNoTrans,
-              n, m, m, 1.0, A, n, Id, m, 0.0, cblas_result, m);
-
-
+    float* cpu_result = nullptr;
+    CUDA_CHECK(cudaMallocHost(&cpu_result, n * m * sizeof(float)));
+    cpu_transpose(A, n, m, cpu_result);
+    bool match = true;
+    for (int i = 0; i < n * m; ++i) {
+        if (std::fabs(cpu_result[i] - A_T[i]) > 1e-5) {
+            match = false;
+            printf("Mismatch at index %d: CPU %f, GPU %f\n", i, cpu_result[i], A_T[i]);
+            break;
+        }
+    }
+    if (match) {
+        printf("Transpose result matches CPU reference.\n");
+    } else {
+        printf("Transpose result does NOT match CPU reference.\n");
+    }
 
     // Cleanup
-
-    CUDA_CHECK(cudaFree(d_A));
-    CUDA_CHECK(cudaFree(d_AT));
+    CUDA_CHECK(cudaFreeHost(cpu_result));
     CUDA_CHECK(cudaFreeHost(A));
     CUDA_CHECK(cudaFreeHost(A_T));
 
