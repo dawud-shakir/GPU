@@ -12,6 +12,7 @@ Run: ./<executable>
 #include <cstdlib>
 #include <cstdint>
 #include <vector>
+#include <cblas.h>  // for verification with cblas_dgemm
 #include <cuda_runtime.h>
 #include <cuda/atomic>
 
@@ -192,33 +193,42 @@ int main(int argc, char** argv)
 {
     // Problem size (default 1<<10)
     int n = (argc > 1) ? std::atoi(argv[1]) : (1 << 10);    // 1024
+    int m = n;
 
     // Host allocations
 
     float *A = nullptr, *A_T = nullptr; 
-    CUDA_CHECK(cudaMallocHost(&A, n * n * sizeof(float)));
-    CUDA_CHECK(cudaMallocHost(&A_T, n * n * sizeof(float)));
+    CUDA_CHECK(cudaMallocHost(&A, n * m * sizeof(float)));
+    CUDA_CHECK(cudaMallocHost(&A_T, n * m * sizeof(float)));
 
     // Initialize host data
     for (int i = 0; i < n; ++i) {
-        for (int j = 0; j < n; ++j) {
-            A[i * n + j] = (float)(i * n + j);
-            A_T[j * n + i] = 0.0f;
+        for (int j = 0; j < m; ++j) {
+            A[i * m + j] = (float)(i * m + j);
+            A_T[j * m + i] = 0.0f;
         }
     }
 
     // Device allocations
     float *d_A = nullptr, *d_AT = nullptr;
-    CUDA_CHECK(cudaMalloc(&d_A, n * n * sizeof(float)));
-    CUDA_CHECK(cudaMalloc(&d_AT, n * n * sizeof(float)));
+    CUDA_CHECK(cudaMalloc(&d_A, n * m * sizeof(float)));
+    CUDA_CHECK(cudaMalloc(&d_AT, n * m * sizeof(float)));
 
     // H2D copies
-    CUDA_CHECK(cudaMemcpy(d_A, A, n * n * sizeof(float), cudaMemcpyHostToDevice));
-    CUDA_CHECK(cudaMemcpy(d_AT, A_T, n * n * sizeof(float), cudaMemcpyHostToDevice));
+    CUDA_CHECK(cudaMemcpy(d_A, A, n * m * sizeof(float), cudaMemcpyHostToDevice));
+    CUDA_CHECK(cudaMemcpy(d_AT, A_T, n * m * sizeof(float), cudaMemcpyHostToDevice));
 
     // Time transposes
     call_transpose_fast(n, d_A, d_AT);
-    call_transpose_slow(n, n, d_A, d_AT);
+    call_transpose_slow(n, m, d_A, d_AT);
+
+    // Verify
+    float* cblas_result = nullptr;
+    CUDA_CHECK(cudaMallocHost(&cblas_result, n * m * sizeof(float)));
+     // AT (n x m) = A^T (n x m) * I (m x m)
+    cblas_dgemm(CblasRowMajor, CblasTrans, CblasNoTrans,
+              n, m, m, 1.0, A, n, Id, m, 0.0, cblas_result, m);
+
 
 
     // Cleanup
