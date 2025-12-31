@@ -27,6 +27,12 @@ Run: ./<executable>
         }                                                                 \
     } while (0)
 
+
+/* macro to index a 1D memory array with 2D indices in column-major order */
+/* ld is the leading dimension, i.e. the number of rows in the matrix     */
+
+#define INDX(row, col, ld) (((col) * (ld)) + (row))
+
 __global__ void gpu_transpose_1(const float* __restrict__ A,
     int n, int m, float* __restrict__ A_T)
 {
@@ -36,14 +42,10 @@ __global__ void gpu_transpose_1(const float* __restrict__ A,
     if (ty < n && tx < m) {
         // int input_idx = ty * m + tx;
         // int output_idx = tx * n + ty;
-        A_T[tx * n + ty] = A[ty * m + tx];
+        A_T[INDX(tx, ty, n)] = A[INDX(ty, tx, m)];
     }
 }
 
-/* macro to index a 1D memory array with 2D indices in column-major order */
-/* ld is the leading dimension, i.e. the number of rows in the matrix     */
-
-#define INDX(row, col, ld) (((col) * (ld)) + (row))
 
 // CUDA kernel for naive matrix transpose
 __global__ void gpu_transpose_2(const float* A, int n, int m, float* A_T)
