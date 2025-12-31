@@ -98,7 +98,7 @@ __global__ void gpu_transpose_tiled( const float* a,
         c[INDX( tileY + threadIdx.x, tileX + threadIdx.y, m )] = smemArray[threadIdx.y][threadIdx.x];
     } /* end if */
     return;
-
+}
 
 
 // void call_transpose_fast(int n, float* a, float* c)
