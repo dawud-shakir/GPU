@@ -210,8 +210,8 @@ int main(int argc, char** argv)
     std::memset(gpu_result, 0, m * n * sizeof(float));
 
     // Kernel launch config
-    int threads = 256;
-    int blocks = (n + threads - 1) / threads;
+    dim3 threads(16, 16);
+    dim3 blocks((n + threads.x - 1) / threads.x, (m + threads.y - 1) / threads.y);
 
     // Warmup
     gpu_transpose_1<<<blocks, threads>>>(A, n, m, gpu_result);
