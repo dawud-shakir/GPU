@@ -42,7 +42,12 @@ __global__ void gpu_transpose_1(const float* __restrict__ A,
     if (ty < n && tx < m) {
         // int input_idx = ty * m + tx;
         // int output_idx = tx * n + ty;
-        A_T[INDX(tx, ty, n)] = A[INDX(ty, tx, m)];  // Why is macro is faster than in-place?
+        // A_T[output_idx] = A[input_idx];
+
+        // Why is macro is 0.8 ms faster than in-place calculation?
+        // A_T[INDX(tx, ty, n)] = A[INDX(ty, tx, m)];
+
+        A_T[ty * n + tx] = A[tx * m + ty];
     }
     return;
 }
