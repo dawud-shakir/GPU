@@ -46,7 +46,7 @@ __global__ void gpu_transpose_1(const float* __restrict__ A,
 #define INDX(row, col, ld) (((col) * (ld)) + (row))
 
 // CUDA kernel for naive matrix transpose
-__global__ void gpu_transpose_2(const float* a, int n, int m, float* c)
+__global__ void gpu_transpose_2(const float* __restrict__ a, int n, int m, float* __restrict__ c)
 {
     int myCol = blockDim.x * blockIdx.x + threadIdx.x;
     int myRow = blockDim.y * blockIdx.y + threadIdx.y;
