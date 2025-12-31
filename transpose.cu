@@ -192,7 +192,7 @@ void cpu_transpose(const float* A, int n, int m, float* AT)
 int main(int argc, char** argv)
 {
     // Problem size (default 1024)
-    int n = (argc > 1) ? std::atoi(argv[1]) : 1024;
+    int n = (argc > 1) ? std::atoi(argv[1]) : 2048;
     int m = n;
 
     // Host allocations
