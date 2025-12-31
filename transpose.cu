@@ -244,7 +244,7 @@ int main(int argc, char** argv)
 
     // Verify
     float* cpu_result = nullptr;
-    CUDA_CHECK(cudaMallocHost(&cpu_result, m * n * sizeof(float)));
+    CUDA_CHECK(cudaMallocManaged(&cpu_result, m * n * sizeof(float)));
     cpu_transpose(A, n, m, cpu_result);
     bool match = true;
     for (int i = 0; i < m * n; ++i) {
