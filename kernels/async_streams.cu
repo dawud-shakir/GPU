@@ -8,22 +8,31 @@
 #include <time.h>
 #include "utils.h"
 
-__global__ void kernel1()
+__global__ void kernel1(unsigned long long cycles)
 {
     int tid = blockIdx.x * blockDim.x + threadIdx.x;
+    
     // Simulate some work
-    for (volatile int i = 0; i < 1000000; ++i)
-        for (volatile int j = 0; j < 1000000; ++j)
-            ;
+    unsigned long long start = clock64();
+    while (clock64() - start < cycles) {
+        // intentional spin
+    }
 
-    __syncthreads();
     if (tid == 0)
         printf("Exiting kernel1...\n");
 }
 
-__global__ void kernel2()
+__global__ void kernel2(unsigned long long cycles)
 {
     int tid = blockIdx.x * blockDim.x + threadIdx.x;
+    
+    // Simulate some work
+    unsigned long long start = clock64();
+    while (clock64() - start < cycles) {
+        // intentional spin
+    }
+
+
     if (tid == 0)
         printf("Exiting kernel2...\n");
 }
@@ -79,14 +88,17 @@ int main(int argc, char* argv[])
     int blocks = 32; 
     int grid = (bytes + blocks - 1) / blocks;
 
-    kernel1<<<grid, blocks, 0, compute_stream>>>();
+    // ~1e9 cycles ≈ 0.5–1 second depending on GPU clock
+    unsigned long long cycles = 1ULL << 30;
+
+    kernel1<<<grid, blocks, 0, compute_stream>>>(cycles);
     CUDA_CHECK(cudaGetLastError());
 
     cudaEvent_t event; 
     CUDA_CHECK(cudaEventCreate(&event));                
     CUDA_CHECK(cudaEventRecord(event, compute_stream));
 
-    kernel2<<<grid, blocks, 0, compute_stream>>>();
+    kernel2<<<grid, blocks, 0, compute_stream>>>(cycles);
     CUDA_CHECK(cudaGetLastError());
 
     printf("Entering while loop...\n");
