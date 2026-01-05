@@ -45,7 +45,8 @@ int main(int argc, char* argv[])
 
     kernel1<<<grid, blocks, 0, compute_stream>>>();
 
-    cudaEvent_t event;                 
+    cudaEvent_t event; 
+    cudaEventCreate(&event);                
     cudaEventRecord(event, compute_stream);
 
     kernel2<<<grid, blocks, 0, compute_stream>>>();
