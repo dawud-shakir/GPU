@@ -22,7 +22,7 @@ if [ -z "${file}" ]; then
     exit 1
 fi
 
-echo nvcc -O3 -gencode arch=compute_75,code=sm_75 "${file}" "${nvcc_args[@]}" -o "${file%.cu}"
+nvcc -O3 -gencode arch=compute_75,code=sm_75 "${file}" "${nvcc_args[@]}" -o "${file%.cu}"
 
 #!/usr/bin/env bash
 # set -euo pipefail
