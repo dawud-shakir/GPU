@@ -28,7 +28,7 @@ __host__ bool allCPUWorkDone()
     if ( cpu_work_done ) 
         return true;
     printf("Starting CPU work...\n");
-    struct timespec ts = { .tv_sec = 2, .tv_nsec = 0 };
+    struct timespec ts = { .tv_sec = 5, .tv_nsec = 0 };
     nanosleep(&ts, NULL);
     printf("CPU work done.\n");
     cpu_work_done = true;
