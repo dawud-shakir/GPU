@@ -121,88 +121,6 @@ __global__ void gpu_transpose_tiled( const float* a,
     return;
 }
 
-
-// void call_transpose_fast(int n, float* a, float* c)
-// {
-//     // Kernel launch config
-//     // int threads = 32;   // 32 threads per block x AND 32 threads per block y
-//     // int blocks = (n + threads - 1) / threads;
-
-//     // dim3 threadsPerBlock(32, 32);
-//     // dim3 blocksPerGrid( (n + threadsPerBlock.x - 1) / threadsPerBlock.x,
-//     //                    (n + threadsPerBlock.y - 1) / threadsPerBlock.y );
-
-//     // int n = width * height;
-//     int threadsPerBlock = 1024;
-//     int blocksPerGrid = (n + threadsPerBlock - 1) / threadsPerBlock;
-
-//     // Warmup
-//     transpose_fast<<<blocksPerGrid, threadsPerBlock>>>(n, a, c);
-//     CUDA_CHECK(cudaGetLastError());
-//     CUDA_CHECK(cudaDeviceSynchronize());
-
-//     // Timed runs
-//     const int iters = 50;
-//     cudaEvent_t start, stop;
-//     CUDA_CHECK(cudaEventCreate(&start));
-//     CUDA_CHECK(cudaEventCreate(&stop));
-
-//     CUDA_CHECK(cudaEventRecord(start));
-//     for (int it = 0; it < iters; ++it) {
-//         transpose_fast<<<blocksPerGrid, threadsPerBlock>>>(n, a, c);
-//     }
-//     CUDA_CHECK(cudaEventRecord(stop));
-//     CUDA_CHECK(cudaEventSynchronize(stop));
-//     CUDA_CHECK(cudaGetLastError());
-
-//     printf("Completed %d iterations.\n", iters);
-//     float ms = 0.0f;
-//     CUDA_CHECK(cudaEventElapsedTime(&ms, start, stop));
-//     float ms_per = ms / iters;
-//     printf("%s (n=%d): %.3f ms (%.3f ms per run)\n",
-//         __func__, n, ms, ms_per);
-
-//     CUDA_CHECK(cudaEventDestroy(start));
-//     CUDA_CHECK(cudaEventDestroy(stop));
-// }
-
-// void call_transpose_slow(int width, int height, const float* __restrict__ input, float* __restrict__ output)
-// {
-//     // Kernel launch config
-//     int n = width * height;
-//     int threads = 256;
-//     int blocks = (n + threads - 1) / threads;
-
-//     // Warmup
-//     transpose_slow<<<blocks, threads>>>(input, output, width, height);
-//     CUDA_CHECK(cudaGetLastError());
-//     CUDA_CHECK(cudaDeviceSynchronize());
-
-//     // Timed runs
-//     const int iters = 50;
-//     cudaEvent_t start, stop;
-//     CUDA_CHECK(cudaEventCreate(&start));
-//     CUDA_CHECK(cudaEventCreate(&stop));
-
-//     CUDA_CHECK(cudaEventRecord(start));
-//     for (int it = 0; it < iters; ++it) {
-//         transpose_slow<<<blocks, threads>>>(input, output, width, height);
-//     }
-//     CUDA_CHECK(cudaEventRecord(stop));
-//     CUDA_CHECK(cudaEventSynchronize(stop));
-//     CUDA_CHECK(cudaGetLastError());
-
-//     printf("Completed %d iterations.\n", iters);
-//     float ms = 0.0f;
-//     CUDA_CHECK(cudaEventElapsedTime(&ms, start, stop));
-//     float ms_per = ms / iters;
-//     printf("%s (n=%d): %.3f ms (%.3f ms per run)\n",
-//         __func__, n, ms, ms_per);
-
-//     CUDA_CHECK(cudaEventDestroy(start));
-//     CUDA_CHECK(cudaEventDestroy(stop));
-// }
-
 void cpu_transpose(const float* A, int n, int m, float* AT)
 {
     for (int i = 0; i < n; ++i)
@@ -213,29 +131,30 @@ void cpu_transpose(const float* A, int n, int m, float* AT)
 #define STR1(x) #x
 #define STR(x)  STR1(x)
 
-#ifndef FUNCTION_NAME
-#define FUNCTION_NAME gpu_transpose_tiled
+#ifndef FUNCTION
+#define FUNCTION gpu_transpose_tiled
 #endif
 
 int main(int argc, char** argv)
 {
-    // Problem size (default 1024)
+    // Problem size (defaults 1024)
     int n = (argc > 1) ? std::atoi(argv[1]) : 1024;
-    int m = n;
+    int m = (argc > 2) ? std::atoi(argv[2]) : 1024;
 
     // Host allocations
 
-    float *A = nullptr, *gpu_result = nullptr;
+    // Matrix (n x m) to transpose
+    float *A = nullptr;
     CUDA_CHECK(cudaMallocManaged(&A, n * m * sizeof(float)));
-    CUDA_CHECK(cudaMallocManaged(&gpu_result, m * n * sizeof(float)));
 
-    // Data
     for (int i = 0; i < n; ++i) {
         for (int j = 0; j < m; ++j) {
             A[i * m + j] = (float)(i * m + j);
         }
     }
 
+    float* gpu_result = nullptr;
+    CUDA_CHECK(cudaMallocManaged(&gpu_result, m * n * sizeof(float)));
     // Zero output matrix
     std::memset(gpu_result, 0, m * n * sizeof(float));
 
@@ -244,7 +163,7 @@ int main(int argc, char** argv)
     dim3 blocks((n + threads.x - 1) / threads.x, (m + threads.y - 1) / threads.y);
 
     // Warmup
-    FUNCTION_NAME<<<blocks, threads>>>(A, n, m, gpu_result);
+    FUNCTION<<<blocks, threads>>>(A, n, m, gpu_result);
     CUDA_CHECK(cudaGetLastError());
     CUDA_CHECK(cudaDeviceSynchronize());
 
@@ -256,7 +175,7 @@ int main(int argc, char** argv)
 
     CUDA_CHECK(cudaEventRecord(start));
     for (int it = 0; it < iters; ++it) {
-        FUNCTION_NAME<<<blocks, threads>>>(A, n, m, gpu_result);
+        FUNCTION<<<blocks, threads>>>(A, n, m, gpu_result);
     }
     CUDA_CHECK(cudaEventRecord(stop));
     CUDA_CHECK(cudaEventSynchronize(stop));
@@ -267,7 +186,7 @@ int main(int argc, char** argv)
     CUDA_CHECK(cudaEventElapsedTime(&ms, start, stop));
     float ms_per = ms / iters;
     printf("%s (n=%d): %.3f ms (%.3f ms per run)\n",
-        STR(FUNCTION_NAME), n, ms, ms_per);
+        STR(FUNCTION), n, ms, ms_per);
 
     CUDA_CHECK(cudaEventDestroy(start));
     CUDA_CHECK(cudaEventDestroy(stop));
