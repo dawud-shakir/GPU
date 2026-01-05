@@ -54,7 +54,11 @@ __global__ void gpu_transpose_1(const float* __restrict__ A,
     int n, int m, float* __restrict__ A_T)
 {
     int col = blockIdx.x * blockDim.x;
+    int tx = threadIdx.x;
+
     int row = blockIdx.y * blockDim.y;
+    int ty = threadIdx.y;
+    
 
     if (ty < n && tx < m) {
         A_T[(col + ty) * n + (row + tx)] = A[(row + ty) * m + (col + tx)];  // coalesced/non-strided access (faster)
