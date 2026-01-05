@@ -81,10 +81,6 @@ int main(int argc, char* argv[])
     printf("Exited while loop...\n");
     
     // Wait for both streams to finish
-    CUDA_CHECK(cudaStreamDestroy(copying_stream));
-    CUDA_CHECK(cudaStreamDestroy(compute_stream));
-
-
     CUDA_CHECK(cudaEventDestroy(event));
     CUDA_CHECK(cudaStreamDestroy(copying_stream));
     CUDA_CHECK(cudaStreamDestroy(compute_stream));
