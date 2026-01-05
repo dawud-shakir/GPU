@@ -46,21 +46,35 @@ if [ -z "${file}" ]; then
     exit 1
 fi
 
+# If the file path doesn't exist, try kernels/ subfolder (support basename lookup)
+if [ ! -f "${file}" ]; then
+    if [ -f "kernels/${file}" ]; then
+        echo "Using kernels/${file} as source file"
+        file="kernels/${file}"
+    else
+        base="$(basename "${file}")"
+        if [ -f "kernels/${base}" ]; then
+            echo "Using kernels/${base} as source file"
+            file="kernels/${base}"
+        else
+            echo "Source file '${file}' not found (and not in ./kernels/)." >&2
+            exit 1
+        fi
+    fi
+fi
+
 # Default output to source base name if -o not given
 if [ -z "${outfile}" ]; then
     outfile="${file%.cu}"
 fi
 
-echo nvcc -O3 -gencode arch=compute_75,code=sm_75 "${nvcc_args[@]}" "${file}" -o "${outfile}"
-nvcc -O3 -gencode arch=compute_75,code=sm_75 "${nvcc_args[@]}" "${file}" -o "${outfile}"
+# Helpful nvcc flags:
+# nvcc -Xcompiler -Wall -Wextra -Wpedantic
+# Enables extra compiler warnings.
+
+# nvcc --resource-usage
+# Shows the number of registers and memory used by each kernel.
 
 
-#!/usr/bin/env bash
-# set -euo pipefail
-
-# if [ -z "${1:-}" ]; then
-#     echo "Usage: $0 <source.cu>" >&2
-#     exit 1
-# fi
-
-# nvcc -O3 -gencode arch=compute_75,code=sm_75 "${file}" -o "${file%.cu}"
+echo nvcc -O3 -gencode arch=compute_75,code=sm_75 "${nvcc_args[@]:-}" "${file}" -o "${outfile}"
+nvcc -O3 -gencode arch=compute_75,code=sm_75 "${nvcc_args[@]:-}" "${file}" -o "${outfile}"
