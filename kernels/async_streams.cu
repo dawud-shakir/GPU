@@ -88,7 +88,7 @@ int main(int argc, char* argv[])
     while ( not allCPUWorkDone() || not copyStarted )
     {
         // Peek to see if kernel1 has completed on compute stream
-        if ( cudaEventQuery(event) == cudaSuccess )
+        if ( not copyStarted and cudaEventQuery(event) == cudaSuccess )
         {
             // Add a asynchronous copy operation to the other stream
             printf("Starting async copy from device to host...\n");
