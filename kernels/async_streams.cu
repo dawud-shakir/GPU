@@ -2,7 +2,8 @@
 
 // Demo two streams running asynchronously 
 
-#include <cuda.h>
+// #include <cuda.h>
+#include <cuda_runtime.h>
 #include <stdio.h>
 #include <time.h>
 
