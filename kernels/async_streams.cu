@@ -6,6 +6,7 @@
 #include <cuda_runtime.h>
 #include <stdio.h>
 #include <time.h>
+#include "utils.h"
 
 __global__ void kernel1()
 {
