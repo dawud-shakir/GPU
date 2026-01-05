@@ -55,6 +55,8 @@ int main(int argc, char* argv[])
     kernel2<<<grid, blocks, 0, compute_stream>>>();
     CUDA_CHECK(cudaGetLastError());
 
+    printf("Entering while loop...\n");
+
     while ( not allCPUWorkDone() || not copyStarted )
     {
         // Peek to see if kernel1 has completed on compute stream
