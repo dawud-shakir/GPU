@@ -31,7 +31,9 @@ Run: ./<executable>
 /* macro to index a 1D memory array with 2D indices in column-major order */
 /* ld is the leading dimension, i.e. the number of rows in the matrix     */
 
-#define INDX(row, col, ld) (((col) * (ld)) + (row))
+// #define INDX(row, col, ld) (((col) * (ld)) + (row))
+
+#define INDX( row, col, ld ) ( ( (row) * (ld) ) + (col) )
 
 __global__ void gpu_transpose_1(const float* __restrict__ A,
     int n, int m, float* __restrict__ A_T)
