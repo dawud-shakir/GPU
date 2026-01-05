@@ -13,7 +13,7 @@ __global__ void kernel1()
     int tid = blockIdx.x * blockDim.x + threadIdx.x;
     // Simulate some work
     for (volatile int i = 0; i < 1000000; ++i)
-        for (volatile int j = 0; j < 100; ++j)
+        for (volatile int j = 0; j < 1000000; ++j)
             ;
 
 
