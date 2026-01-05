@@ -31,23 +31,36 @@ Run: ./<executable>
 /* macro to index a 1D memory array with 2D indices in column-major order */
 /* ld is the leading dimension, i.e. the number of rows in the matrix     */
 
-#define INDX(row, col, ld) (((col) * (ld)) + (row))
+#define INDX_C(row, col, ld) (((col) * (ld)) + (row)) // column-major order
 
-// #define INDX( row, col, ld ) ( ( (row) * (ld) ) + (col) )
+#define INDX_R(row, col, ld) ( ( (row) * (ld) ) + (col) ) // row-major order
+
+#define INDX INDX_R
+
+// __global__ void gpu_transpose_1(const float* __restrict__ A,
+//     int n, int m, float* __restrict__ A_T)
+// {
+//     int tx = blockIdx.x * blockDim.x + threadIdx.x;
+//     int ty = blockIdx.y * blockDim.y + threadIdx.y;
+
+//     if (ty < n && tx < m) {
+//         // A_T[tx * m + ty] = A[ty * n + tx];  // strided access
+//         A_T[ty * n + tx] = A[tx * m + ty];  // coalesced/non-strided access (faster)
+//     }
+//     return;
+// }
 
 __global__ void gpu_transpose_1(const float* __restrict__ A,
     int n, int m, float* __restrict__ A_T)
 {
-    int tx = blockIdx.x * blockDim.x + threadIdx.x;
-    int ty = blockIdx.y * blockDim.y + threadIdx.y;
+    int col = blockIdx.x * blockDim.x;
+    int row = blockIdx.y * blockDim.y;
 
     if (ty < n && tx < m) {
-        // A_T[tx * m + ty] = A[ty * n + tx];  // strided access
-        A_T[ty * n + tx] = A[tx * m + ty];  // coalesced/non-strided access (faster)
+        A_T[(col + ty) * n + (row + tx)] = A[(row + ty) * m + (col + tx)];  // coalesced/non-strided access (faster)
     }
     return;
 }
-
 
 // CUDA kernel for naive matrix transpose
 __global__ void gpu_transpose_2(const float* A, int n, int m, float* A_T)
