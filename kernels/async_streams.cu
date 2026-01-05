@@ -10,12 +10,16 @@
 
 __global__ void kernel1()
 {
-    printf("Exiting kernel1...\n");
+    int tid = blockIdx.x * blockDim.x + threadIdx.x;
+    if (tid == 0)
+        printf("Exiting kernel1...\n");
 }
 
 __global__ void kernel2()
 {
-    printf("Exiting kernel2...\n");
+    int tid = blockIdx.x * blockDim.x + threadIdx.x;
+    if (tid == 0)
+        printf("Exiting kernel2...\n");
 }
 
 static bool cpu_work_done = false;
@@ -74,6 +78,7 @@ int main(int argc, char* argv[])
         }
     }
 
+    printf("Exited while loop...\n");
     
     // Wait for both streams to finish
     CUDA_CHECK(cudaStreamDestroy(copying_stream));
