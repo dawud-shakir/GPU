@@ -16,7 +16,7 @@ __global__ void kernel1()
         for (volatile int j = 0; j < 1000000; ++j)
             ;
 
-
+    __syncthreads();
     if (tid == 0)
         printf("Exiting kernel1...\n");
 }
