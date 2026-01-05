@@ -50,7 +50,25 @@ Run: ./<executable>
 //     return;
 // }
 
-__global__ void gpu_transpose_1(const float* __restrict__ A,
+// Column major version
+__global__ void gpu_transpose_cm(const float* __restrict__ A,
+    int n, int m, float* __restrict__ A_T)
+{
+    int col = blockIdx.x * blockDim.x;
+    int tx = threadIdx.x;
+
+    int row = blockIdx.y * blockDim.y;
+    int ty = threadIdx.y;
+    
+
+    if (ty < n && tx < m) {
+        A_T[(row + ty) * n + (col + tx)] = A[(col + tx) * m + (row + ty)];  // coalesced/non-strided access (faster)
+    }
+    return;
+}
+
+// Row major version
+__global__ void gpu_transpose_rm(const float* __restrict__ A,
     int n, int m, float* __restrict__ A_T)
 {
     int col = blockIdx.x * blockDim.x;
@@ -65,7 +83,6 @@ __global__ void gpu_transpose_1(const float* __restrict__ A,
     }
     return;
 }
-
 // CUDA kernel for naive matrix transpose
 __global__ void gpu_transpose_2(const float* A, int n, int m, float* A_T)
 {
