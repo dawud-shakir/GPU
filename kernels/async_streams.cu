@@ -25,14 +25,32 @@ __global__ void kernel2()
 static bool cpu_work_done = false;
 __host__ bool allCPUWorkDone()
 {
-    if ( cpu_work_done ) 
+    static int started = 0;
+    static struct timespec start_ts = {0, 0};
+
+    if (cpu_work_done)
         return true;
-    printf("Starting CPU work...\n");
-    struct timespec ts = { .tv_sec = 5, .tv_nsec = 0 };
-    nanosleep(&ts, NULL);
-    printf("CPU work done.\n");
-    cpu_work_done = true;
-    return true;
+
+    if (!started) {
+        clock_gettime(CLOCK_MONOTONIC, &start_ts);
+        started = 1;
+        printf("Starting CPU work...\n");
+    }
+
+    struct timespec now;
+    clock_gettime(CLOCK_MONOTONIC, &now);
+
+    long sec = now.tv_sec - start_ts.tv_sec;
+    long nsec = now.tv_nsec - start_ts.tv_nsec;
+    if (nsec < 0) { sec -= 1; nsec += 1000000000L; }
+
+    if (sec >= 5) {
+        printf("CPU work done.\n");
+        cpu_work_done = true;
+        return true;
+    }
+
+    return false;
 }
 
 int main(int argc, char* argv[])
