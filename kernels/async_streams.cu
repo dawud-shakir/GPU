@@ -6,12 +6,12 @@
 #include <stdio.h>
 #include <time.h>
 
-__device__ void kernel1()
+__global__ void kernel1()
 {
 
 }
 
-__device__ void kernel2()
+__global__ void kernel2()
 {
 
 }
