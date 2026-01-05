@@ -46,7 +46,7 @@ int main(int argc, char* argv[])
     int grid = (bytes + blocks - 1) / blocks;
 
     kernel1<<<grid, blocks, 0, compute_stream>>>();
-    CUDA_CHECK(cudaGetLastError()));
+    CUDA_CHECK(cudaGetLastError());
 
     cudaEvent_t event; 
     CUDA_CHECK(cudaEventCreate(&event));                
@@ -61,7 +61,7 @@ int main(int argc, char* argv[])
         if ( cudaEventQuery(event) == cudaSuccess )
         {
             // Add a asynchronous copy operation to the other stream
-            CUDA_CHECK(cudaMemcpyAsync(host, device, bytes*sizeof(char), cudaMemcpyDeviceToHost, copying_stream)));
+            CUDA_CHECK(cudaMemcpyAsync(host, device, bytes*sizeof(char), cudaMemcpyDeviceToHost, copying_stream));
             copyStarted = true;
         }
     }
