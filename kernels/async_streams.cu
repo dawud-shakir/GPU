@@ -19,7 +19,7 @@ __global__ void kernel2()
 
 __host__ bool allCPUWorkDone()
 {
-    struct timespec ts = { .tv_sec = 0, .tv_nsec = 2000 * 1000 * 1000 }; // 2 s
+    struct timespec ts = { .tv_sec = 2, .tv_nsec = 0 };
     nanosleep(&ts, NULL);
     return false;
 }
