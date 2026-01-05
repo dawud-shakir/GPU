@@ -26,7 +26,7 @@ __host__ bool allCPUWorkDone()
 int main(int argc, char* argv[])
 {
     char* host = NULL;
-    size_t bytes = 1e6;
+    size_t bytes = 1000;
     cudaMallocHost(&host, bytes * sizeof(char));
 
     char* device = NULL;
