@@ -73,6 +73,7 @@ int main(int argc, char* argv[])
         if ( cudaEventQuery(event) == cudaSuccess )
         {
             // Add a asynchronous copy operation to the other stream
+            printf("Starting async copy from device to host...\n");
             CUDA_CHECK(cudaMemcpyAsync(host, device, bytes*sizeof(char), cudaMemcpyDeviceToHost, copying_stream));
             copyStarted = true;
         }
