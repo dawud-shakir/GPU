@@ -40,6 +40,9 @@ int main(int argc, char* argv[])
     cudaStreamCreate(&copying_stream);
 
 
+    int blocks = 32; 
+    int grid = (bytes + blocks - 1) / blocks;
+
     kernel1<<<grid, blocks, 0, compute_stream>>>();
 
     cudaEvent_t event;                 
