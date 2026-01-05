@@ -1,4 +1,14 @@
 // transpose_via_blas.c
+
+// To compile:
+/*
+/usr/local/bin/gcc-15 -std=c17 transpose_via_blas.c \
+-I/usr/local/opt/openblas/include \
+-L/usr/local/opt/openblas/lib -lopenblas -lm \
+-o transpose
+*/
+
+
 #include <cblas.h>
 #include <stdio.h>
 #include <stdlib.h>
