@@ -76,5 +76,11 @@ fi
 # Shows the number of registers and memory used by each kernel.
 
 
-echo nvcc -O3 -gencode arch=compute_75,code=sm_75 "${nvcc_args[@]:-}" "${file}" -o "${outfile}"
-nvcc -O3 -gencode arch=compute_75,code=sm_75 "${nvcc_args[@]:-}" "${file}" -o "${outfile}"
+# Invoke nvcc, but avoid expanding nvcc_args when it's empty/unset
+if [ "${#nvcc_args[@]:-0}" -gt 0 ]; then
+    echo nvcc -O3 -gencode arch=compute_75,code=sm_75 "${nvcc_args[@]}" "${file}" -o "${outfile}"
+    nvcc -O3 -gencode arch=compute_75,code=sm_75 "${nvcc_args[@]}" "${file}" -o "${outfile}"
+else
+    echo nvcc -O3 -gencode arch=compute_75,code=sm_75 "${file}" -o "${outfile}"
+    nvcc -O3 -gencode arch=compute_75,code=sm_75 "${file}" -o "${outfile}"
+fi
