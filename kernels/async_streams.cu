@@ -27,7 +27,7 @@ int main(int argc, char* argv[])
 {
     char* host = NULL;
     size_t bytes = 1e6;
-    cudaHostMalloc(&host, bytes * sizeof(char));
+    cudaMallocHost(&host, bytes * sizeof(char));
 
     char* device = NULL;
     cudaMalloc(&device, bytes * sizeof(char));
