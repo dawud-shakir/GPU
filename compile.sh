@@ -65,7 +65,7 @@ fi
 
 # Default output to source base name if -o not given
 if [ -z "${outfile}" ]; then
-    outfile="${file%.cu}"
+    outfile="$(basename "${file}" .cu)"
 fi
 
 # Helpful nvcc flags:
