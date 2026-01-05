@@ -29,30 +29,31 @@ int main(int argc, char* argv[])
 {
     char* host = NULL;
     size_t bytes = 1000;
-    cudaMallocHost(&host, bytes * sizeof(char));
+    CUDA_CHECK(cudaMallocHost(&host, bytes * sizeof(char)));
 
     char* device = NULL;
-    cudaMalloc(&device, bytes * sizeof(char));
+    CUDA_CHECK(cudaMalloc(&device, bytes * sizeof(char)));
 
     cudaStream_t compute_stream;    // processing stream
     cudaStream_t copying_stream;    // memory transfer stream
     bool copyStarted = false;
 
-    cudaStreamCreate(&compute_stream);
-    cudaStreamCreate(&copying_stream);
+    CUDA_CHECK(cudaStreamCreate(&compute_stream));
+    CUDA_CHECK(cudaStreamCreate(&copying_stream));
 
 
     int blocks = 32; 
     int grid = (bytes + blocks - 1) / blocks;
 
     kernel1<<<grid, blocks, 0, compute_stream>>>();
+    CUDA_CHECK(cudaGetLastError()));
 
     cudaEvent_t event; 
-    cudaEventCreate(&event);                
-    cudaEventRecord(event, compute_stream);
+    CUDA_CHECK(cudaEventCreate(&event));                
+    CUDA_CHECK(cudaEventRecord(event, compute_stream));
 
     kernel2<<<grid, blocks, 0, compute_stream>>>();
-
+    CUDA_CHECK(cudaGetLastError());
 
     while ( not allCPUWorkDone() || not copyStarted )
     {
@@ -60,15 +61,22 @@ int main(int argc, char* argv[])
         if ( cudaEventQuery(event) == cudaSuccess )
         {
             // Add a asynchronous copy operation to the other stream
-            cudaMemcpyAsync(host, device, bytes*sizeof(char), cudaMemcpyDeviceToHost, copying_stream);
+            CUDA_CHECK(cudaMemcpyAsync(host, device, bytes*sizeof(char), cudaMemcpyDeviceToHost, copying_stream)));
             copyStarted = true;
         }
     }
 
     
     // Wait for both streams to finish
-    cudaStreamDestroy(copying_stream);
-    cudaStreamDestroy(compute_stream);
+    CUDA_CHECK(cudaStreamDestroy(copying_stream));
+    CUDA_CHECK(cudaStreamDestroy(compute_stream));
+
+
+    CUDA_CHECK(cudaEventDestroy(event));
+    CUDA_CHECK(cudaStreamDestroy(copying_stream));
+    CUDA_CHECK(cudaStreamDestroy(compute_stream));
+    CUDA_CHECK(cudaFree(device));
+    CUDA_CHECK(cudaFreeHost(host));
 
     return 0;
 }
