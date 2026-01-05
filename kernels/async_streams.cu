@@ -18,13 +18,17 @@ __global__ void kernel2()
     printf("Exiting kernel2...\n");
 }
 
+static bool cpu_work_done = false;
 __host__ bool allCPUWorkDone()
 {
+    if ( cpu_work_done ) 
+        return true;
     printf("Starting CPU work...\n");
     struct timespec ts = { .tv_sec = 2, .tv_nsec = 0 };
     nanosleep(&ts, NULL);
     printf("CPU work done.\n");
-    return false;
+    cpu_work_done = true;
+    return true;
 }
 
 int main(int argc, char* argv[])
