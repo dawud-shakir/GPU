@@ -10,18 +10,20 @@
 
 __global__ void kernel1()
 {
-
+    printf("Exiting kernel1...\n");
 }
 
 __global__ void kernel2()
 {
-
+    printf("Exiting kernel2...\n");
 }
 
 __host__ bool allCPUWorkDone()
 {
+    printf("Starting CPU work...\n");
     struct timespec ts = { .tv_sec = 2, .tv_nsec = 0 };
     nanosleep(&ts, NULL);
+    printf("CPU work done.\n");
     return false;
 }
 
