@@ -11,6 +11,10 @@
 __global__ void kernel1()
 {
     int tid = blockIdx.x * blockDim.x + threadIdx.x;
+    // Simulate some work
+    for (volatile int i = 0; i < 1000000; ++i); 
+
+
     if (tid == 0)
         printf("Exiting kernel1...\n");
 }
