@@ -206,7 +206,7 @@ int main(int argc, char** argv)
     if (match) {
         printf("Transpose result matches CPU reference.\n");
     } else {
-        printf("Transpose result does NOT match CPU reference.\n");
+        printf("\x1b[31mTranspose result does NOT match CPU reference.\x1b[0m\n");
     }
 
     // Cleanup
