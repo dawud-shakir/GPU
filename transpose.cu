@@ -35,7 +35,7 @@ Run: ./<executable>
 
 #define INDX_R(row, col, ld) ( ( (row) * (ld) ) + (col) ) // row-major order
 
-#define INDX INDX_C
+#define INDX INDX_R
 
 // __global__ void gpu_transpose_1(const float* __restrict__ A,
 //     int n, int m, float* __restrict__ A_T)
