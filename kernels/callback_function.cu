@@ -32,7 +32,7 @@ int main()
     cudaStream_t stream;
     CUDA_CHECK(cudaStreamCreate(&stream));
 
-    int callback_id = 0;
+    int prior_kernel_id = 1;
 
 
     printf("Launching kernel 1...\n");
@@ -41,7 +41,7 @@ int main()
 
     printf("Enqueueing host callback 1...\n");
     // Enqueue host function in *this* stream
-    CUDA_CHECK(cudaLaunchHostFunc(stream, host_callback, &callback_id));
+    CUDA_CHECK(cudaLaunchHostFunc(stream, host_callback, &prior_kernel_id));
 
     printf("Launching kernel 2...\n");
     // More work in the same stream (will wait for callback)
