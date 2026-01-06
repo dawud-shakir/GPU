@@ -35,13 +35,15 @@ int main()
     int callback_id = 0;
 
 
-
+    printf("Launching kernel 1...\n");
     kernel<<<256, 256, 0, stream>>>(cycles_per_ms * 2000); // ~2 seconds
     CUDA_CHECK(cudaGetLastError());
 
+    printf("Enqueueing host callback 1...\n");
     // Enqueue host function in *this* stream
     CUDA_CHECK(cudaLaunchHostFunc(stream, host_callback, &callback_id));
 
+    printf("Launching kernel 2...\n");
     // More work in the same stream (will wait for callback)
     kernel<<<256, 256, 0, stream>>>(cycles_per_ms * 0); // ~0 seconds
     CUDA_CHECK(cudaGetLastError());
