@@ -3,6 +3,7 @@
 
 #include <cuda_runtime.h>
 #include <cstdio>
+#include "utils.h"
 
 __global__ void kernel(unsigned long long cycles) {
     // some GPU work
@@ -21,26 +22,33 @@ void CUDART_CB host_callback(void* userData)
 
 int main()
 {
+    // // ~1e9 cycles ≈ 0.5–1 second depending on GPU clock
+    // unsigned long long cycles = 1ULL << 30;
+
+    const unsigned long long cycles_per_ms = 
+            (unsigned long long)getDeviceProperties().clockRate; // kHz = cycles/ms
     
+
     cudaStream_t stream;
-    cudaStreamCreate(&stream);
+    CUDA_CHECK(cudaStreamCreate(&stream));
 
     int callback_id = 0;
 
-    // ~1e9 cycles ≈ 0.5–1 second depending on GPU clock
-    unsigned long long cycles = 1ULL << 30;
 
-    kernel<<<256, 256, 0, stream>>>(cycles);
+
+    kernel<<<256, 256, 0, stream>>>(cycles_per_ms * 2000); // ~2 seconds
+    CUDA_CHECK(cudaGetLastError());
 
     // Enqueue host function in *this* stream
-    cudaLaunchHostFunc(stream, host_callback, &callback_id);
+    CUDA_CHECK(cudaLaunchHostFunc(stream, host_callback, &callback_id));
 
     // More work in the same stream (will wait for callback)
-    kernel<<<256, 256, 0, stream>>>(0);
+    kernel<<<256, 256, 0, stream>>>(cycles_per_ms * 0); // ~0 seconds
+    CUDA_CHECK(cudaGetLastError());
 
     // Let everything finish
-    cudaStreamSynchronize(stream);
+    CUDA_CHECK(cudaStreamSynchronize(stream));
 
-    cudaStreamDestroy(stream);
+    CUDA_CHECK(cudaStreamDestroy(stream));
     return 0;
 }

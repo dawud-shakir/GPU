@@ -13,5 +13,14 @@
         }                                                                 \
     } while (0)
 
+
+cudaDeviceProp getDeviceProperties(int dev = 0) {
+    CUDA_CHECK(cudaSetDevice(dev));
+
+    cudaDeviceProp prop{};
+    CUDA_CHECK(cudaGetDeviceProperties(&prop, dev));
+    return prop;
+}
+
 #endif // KERNELS_UTILS_H
 
