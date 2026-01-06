@@ -25,7 +25,7 @@ int main()
     cudaStream_t stream;
     cudaStreamCreate(&stream);
 
-    int callback_id = 42;
+    int callback_id = 0;
 
     // ~1e9 cycles ≈ 0.5–1 second depending on GPU clock
     unsigned long long cycles = 1ULL << 30;
