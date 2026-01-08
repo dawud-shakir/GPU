@@ -1,4 +1,5 @@
 #include <cuda_runtime.h>
+#include <stdio.h>
 
 void vecAddSequential(float* A_h, float* B_h, float* C_h, int n) {
     for (int i = 0; i < n; ++i) {
