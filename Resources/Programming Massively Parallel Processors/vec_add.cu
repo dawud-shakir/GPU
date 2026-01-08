@@ -37,3 +37,39 @@ void vecAdd(float* A_h, float* B_h, float* C_h, int n)
     cudaFree(B_d);
     cudaFree(C_d);
 }
+
+int main(int argc, char* argv[])
+{
+    int n = argc > 1 ? atoi(argv[1]) : 200000;
+
+
+    int size = n * sizeof(float);
+    float* A = (float*)malloc(size);
+    float* B = (float*)malloc(size);
+
+    float* C_cpu = (float*)malloc(size);
+    float* C_gpu = (float*)malloc(size);
+
+    for (int i = 0; i < n; ++i) {
+        A[i] = (float)i;
+        B[i] = (float)(i * 2);
+    }
+
+    vecAddSequential(A, B, C_cpu, n);
+    vecAdd(A, B, C_gpu, n);
+
+    for (int i = 0; i < n; ++i) {
+        if (C_cpu[i] != C_gpu[i]) {
+            printf("Mismatch at index %d: CPU %f, GPU %f\n", i, C_cpu[i], C_gpu[i]);
+            return -1;
+        }
+    }
+    printf("Results match!\n");
+
+    free(A);
+    free(B);
+    free(C_cpu);
+    free(C_gpu);
+
+    return 0;
+}
