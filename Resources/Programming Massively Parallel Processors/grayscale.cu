@@ -109,6 +109,9 @@ static void write_pgm_gray(const char* filename, const unsigned char* gray, int 
 // }
 int main()
 {
+    char* root_dir = getWorkingDirectory();
+    printf("Root dir: %s\n", root_dir);
+    
     int channels = 3;
     cudaMemcpyToSymbol(CHANNELS, &channels, sizeof(channels));
     int width, height;
