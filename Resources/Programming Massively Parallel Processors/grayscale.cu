@@ -89,8 +89,10 @@ static void write_pgm_gray(const char* filename, const unsigned char* gray, int 
 // }
 int main()
 {
-    cudaMemcpyToSymbol(CHANNELS, 3, sizeof(int));
+    int channels = 3;
+    cudaMemcpyToSymbol(CHANNELS, &channels, sizeof(channels));
     int width, height;
+
     unsigned char* h_inputImage = read_ppm_rgb_simple(input_path, &width, &height);
     if (!h_inputImage) {
         printf("Failed to read input image\n");
