@@ -2,17 +2,19 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-// #include <unistd.h>
-// #include <limits.h>
+#include <unistd.h>
+#include <limits.h>
 
-// static
-// char* getWorkingDirectory() {
-//     char cwd[PATH_MAX];
-//     if (getcwd(cwd, sizeof(cwd)))
-//         return cwd;
-//     else
-//         return NULL;
-// }
+static
+char* getWorkingDirectory() {
+    char cwd[PATH_MAX];
+    if (!getcwd(cwd, sizeof(cwd))) {
+        perror("getWorkingDirectory");
+        return nullptr;
+    }       
+    else
+        return cwd;
+}
 
 //#define ROOT_DIR "/Users/macintosh/UNM/GPU/Resources/Programming Massively Parallel Processors"
 #define ROOT_DIR "."
@@ -48,8 +50,6 @@ void colorToGrayscaleConversion(unsigned char* Pout,
 // Minimal P6 reader: returns malloc'd RGB buffer (width*height*3) or nullptr on error.
 // Assumes: exactly "P6", maxval 255, no comment lines.
 static unsigned char* read_ppm_rgb_simple(const char* filename, int* width_out, int* height_out) {
-       printf("here");
-
     FILE* f = fopen(filename, "rb");
     if (!f) return nullptr;
 
