@@ -8,7 +8,7 @@
 static
 char* getWorkingDirectory() {
     char cwd[PATH_MAX];
-    if (!getcwd(cwd, sizeof(cwd))) {
+    if (!getcwd(NULL, 0)) {
         perror("getWorkingDirectory");
         return nullptr;
     }       
@@ -111,6 +111,7 @@ int main()
 {
     char* root_dir = getWorkingDirectory();
     printf("Root dir: %s\n", root_dir);
+    free(root_dir);
     
     int channels = 3;
     cudaMemcpyToSymbol(CHANNELS, &channels, sizeof(channels));
