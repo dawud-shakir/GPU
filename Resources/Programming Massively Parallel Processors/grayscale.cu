@@ -1,31 +1,19 @@
-#include <cuda_runtime.h>
 #include <stdio.h>
 #include <stdlib.h>
-
-// #include <unistd.h>
-// #include <limits.h>
-
-// static
-// char* getCurrentWorkingDirectory() {
-//     char* cwd = getcwd(NULL, 0);   // libc allocates with malloc
-//     if (!cwd) {
-//         perror("getCurrentWorkingDirectory");
-//         return nullptr;
-//     }       
-//     else
-//         return cwd;                 // caller must free()
-// }
 
 #define ROOT_DIR "/usr/GPU/Resources/Programming Massively Parallel Processors"
 const char* input_path = ROOT_DIR "/flowers_rgb.ppm";
 const char* output_path = ROOT_DIR "/flowers_g.pgm";
+
+static unsigned char* read_ppm_rgb_simple(const char* filename, int* width_out, int* height_out);
+static void write_pgm_gray(const char* filename, const unsigned char* gray, int width, int height);
 
 __constant__ int CHANNELS;
 
 // The input image is encoded as unsigned chars [0, 255]
 // Each pixel is 3 consecutive chars for the 3 channels (RGB)
 __global__
-void colorToGrayscaleConversion(unsigned char* Pout,
+void colorToGrayscaleConversionKernel(unsigned char* Pout,
     unsigned char* Pin, int width, int height) {
         int col = blockIdx.x * blockDim.x + threadIdx.x;
         int row = blockIdx.y * blockDim.y + threadIdx.y;
@@ -45,6 +33,54 @@ void colorToGrayscaleConversion(unsigned char* Pout,
             Pout[grayscaleOffset] = (0.21f * r) + (0.71f * g) + (0.07f * b); 
         }
     }
+
+void colorToGrayscaleConversion(unsigned char* Pin_h, unsigned char* Pout_h, int width, int height) {
+    int size = width * height * sizeof(unsigned char);
+    unsigned char *Pin_d, *Pout_d;
+
+    cudaMalloc((void **)&Pin_d, size);
+    cudaMalloc((void **)&Pout_d, size);
+
+    cudaMemcpy(Pin_d, Pin_h, size, cudaMemcpyHostToDevice);
+    
+    dim3 blockDim(32, 32);
+    dim3 gridDim(ceil(width / blockDim.x), ceil(height / blockDim.y));
+
+    // Launch ceil(width/32) x ceil(height/32) blocks of 32 x 32 threads each
+    colorToGrayscaleConversionKernel<<<gridDim, blockDim>>>(Pout_d, Pin_d, width, height);
+
+    cudaMemcpy(Pout_h, Pout_d, size, cudaMemcpyDeviceToHost);
+     
+    cudaFree(Pin_d);
+    cudaFree(Pout_d);
+}
+
+int main(int argc, char* argv[])
+{
+    int channels = 3;
+    cudaMemcpyToSymbol(CHANNELS, &channels, sizeof(channels));
+    int width, height;
+
+    unsigned char* Pin = read_ppm_rgb_simple(input_path, &width, &height);
+    if (!Pin) {
+        printf("Failed to read input image %s\n", input_path);
+        return 1;
+    }
+
+    int size = width * height * sizeof(unsigned char);
+    unsigned char* Pout = (unsigned char*)malloc(size);
+
+    colorToGrayscaleConversion(Pin, Pout, width, height);
+
+    write_pgm_gray(output_path, Pout, width, height);
+
+    free(Pin);
+    free(Pout);
+    
+    return 0;
+
+
+}
 
 // Minimal P6 reader: returns malloc'd RGB buffer (width*height*3) or nullptr on error.
 // Assumes: exactly "P6", maxval 255, no comment lines.
@@ -82,44 +118,4 @@ static void write_pgm_gray(const char* filename, const unsigned char* gray, int 
     fprintf(f, "P5\n%d %d\n255\n", width, height);
     fwrite(gray, 1, width * height, f);
     fclose(f);
-}
-// // ...existing code...
-
-//     static void write_ppm_rgb(const char* filename, const unsigned char* rgba, int dim) {
-//     // PPM P6 is RGB; we drop alpha.
-//     std::FILE* f = std::fopen(filename, "wb");
-//     if (!f) {
-//         std::perror("fopen");
-//         std::exit(1);
-//     }
-
-//     std::fprintf(f, "P6\n%d %d\n255\n", dim, dim);
-
-//     for (int i = 0; i < dim * dim; i++) {
-//         const unsigned char r = rgba[i * 4 + 0];
-//         const unsigned char g = rgba[i * 4 + 1];
-//         const unsigned char b = rgba[i * 4 + 2];
-//         std::fputc(r, f);
-//         std::fputc(g, f);
-//         std::fputc(b, f);
-//     }
-
-//     std::fclose(f);
-// }
-int main()
-{
-    int channels = 3;
-    cudaMemcpyToSymbol(CHANNELS, &channels, sizeof(channels));
-    int width, height;
-
-    unsigned char* h_inputImage = read_ppm_rgb_simple(input_path, &width, &height);
-    if (!h_inputImage) {
-        printf("Failed to read input image %s\n", input_path);
-        return 1;
-    }
-
-    free(h_inputImage);
-    return 0;
-
-
 }
