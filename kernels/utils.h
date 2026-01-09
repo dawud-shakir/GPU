@@ -1,5 +1,8 @@
 #ifndef KERNELS_UTILS_H
 #define KERNELS_UTILS_H
+
+//The runtime API (most common: cudaMalloc, streams, kernel launches, cudaMemcpy, cudaLaunchHostFunc).
+// Use <cuda.h> only if you need the lower‑level driver API (cuModule, cuModuleLoad, cuLaunchKernel, etc.).
 #include <cuda_runtime.h>
 #include <stdio.h>
 
