@@ -6,7 +6,7 @@ const char* ROOT_DIR = "/Users/macintosh/UNM/GPU/Resources/Programming Massively
 const char* input_path = ROOT_DIR "/flowers_color.ppm";
 const char* output_path = ROOT_DIR "/flowers_rgb.pgm";
 
-__constant__int CHANNELS;
+__constant__ int CHANNELS;
 
 // The input image is encoded as unsigned chars [0, 255]
 // Each pixel is 3 consecutive chars for the 3 channels (RGB)
