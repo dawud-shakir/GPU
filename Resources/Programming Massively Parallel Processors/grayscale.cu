@@ -19,7 +19,11 @@ void colorToGrayscaleConversionKernel(unsigned char* Pout,
         int row = blockIdx.y * blockDim.y + threadIdx.y;
 
         if (col < width && row < height) {
+            // Get 1D offset for the grayscale image
             int grayscaleOffset = row * width + col;
+
+            // One can think of the RGB image having CHANNEL
+            // times more columns than the gray scale image
             int rgbOffset = grayscaleOffset * CHANNELS;
             unsigned char r = Pin[rgbOffset    ];   // Red value
             unsigned char g = Pin[rgbOffset + 1];   // Green value
@@ -27,7 +31,7 @@ void colorToGrayscaleConversionKernel(unsigned char* Pout,
             
             // Perform the rescaling and store it
             // Multiply by floating point constants
-            // These weights are derived from color science experiments modeling human visual
+            // * These weights are derived from color science experiments modeling human visual
             // sensitivity and how strongly each RGB channel contributes to perceived brightness.
 
             Pout[grayscaleOffset] = (0.21f * r) + (0.71f * g) + (0.07f * b); 
@@ -49,6 +53,7 @@ void colorToGrayscaleConversion(unsigned char* Pin_h, unsigned char* Pout_h, int
     // Launch ceil(width/32) x ceil(height/32) blocks of 32 x 32 threads each
     colorToGrayscaleConversionKernel<<<gridDim, blockDim>>>(Pout_d, Pin_d, width, height);
 
+    
     cudaMemcpy(Pout_h, Pout_d, size, cudaMemcpyDeviceToHost);
      
     cudaFree(Pin_d);
@@ -66,6 +71,8 @@ int main(int argc, char* argv[])
         printf("Failed to read input image %s\n", input_path);
         return 1;
     }
+
+    printf("Image dimensions: %d x %d\n", width, height);
 
     int size = width * height * sizeof(unsigned char);
     unsigned char* Pout = (unsigned char*)malloc(size);
