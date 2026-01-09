@@ -118,6 +118,7 @@ int main()
         return 1;
     }
 
+    free(h_inputImage);
     return 0;
 
 
