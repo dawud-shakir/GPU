@@ -2,7 +2,20 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#define ROOT_DIR "/Users/macintosh/UNM/GPU/Resources/Programming Massively Parallel Processors"
+// #include <unistd.h>
+// #include <limits.h>
+
+// static
+// char* getWorkingDirectory() {
+//     char cwd[PATH_MAX];
+//     if (getcwd(cwd, sizeof(cwd)))
+//         return cwd;
+//     else
+//         return NULL;
+// }
+
+//#define ROOT_DIR "/Users/macintosh/UNM/GPU/Resources/Programming Massively Parallel Processors"
+#define ROOT_DIR "."
 const char* input_path = ROOT_DIR "/flowers_rgb.ppm";
 const char* output_path = ROOT_DIR "/flowers_g.pgm";
 
@@ -25,6 +38,9 @@ void colorToGrayscaleConversion(unsigned char* Pout,
             
             // Perform the rescaling and store it
             // Multiply by floating point constants
+            // These weights are derived from color science experiments modeling human visual
+            // sensitivity and how strongly each RGB channel contributes to perceived brightness.
+
             Pout[grayscaleOffset] = (0.21f * r) + (0.71f * g) + (0.07f * b); 
         }
     }
