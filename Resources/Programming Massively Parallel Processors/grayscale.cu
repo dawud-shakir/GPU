@@ -1,6 +1,6 @@
 #include <cuda_runtime.h>
 #include <stdio.h>
-
+#include <stdlib.h>
 
 const char* ROOT_DIR = "/Users/macintosh/UNM/GPU/Resources/Programming Massively Parallel Processors";
 const char* input_path = ROOT_DIR "/flowers_color.ppm";
