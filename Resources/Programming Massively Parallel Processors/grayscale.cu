@@ -3,8 +3,8 @@
 #include <stdlib.h>
 
 #define ROOT_DIR "/Users/macintosh/UNM/GPU/Resources/Programming Massively Parallel Processors"
-const char* input_path = ROOT_DIR "/flowers_color.ppm";
-const char* output_path = ROOT_DIR "/flowers_rgb.pgm";
+const char* input_path = ROOT_DIR "/flowers_rgb.ppm";
+const char* output_path = ROOT_DIR "/flowers_g.pgm";
 
 __constant__ int CHANNELS;
 
