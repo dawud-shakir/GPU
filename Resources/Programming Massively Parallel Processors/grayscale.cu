@@ -48,9 +48,10 @@ void colorToGrayscaleConversion(unsigned char* Pout,
 // Minimal P6 reader: returns malloc'd RGB buffer (width*height*3) or nullptr on error.
 // Assumes: exactly "P6", maxval 255, no comment lines.
 static unsigned char* read_ppm_rgb_simple(const char* filename, int* width_out, int* height_out) {
+       printf("here");
+
     FILE* f = fopen(filename, "rb");
     if (!f) return nullptr;
-    printf("here");
 
     char magic[3] = {0};
     if (fscanf(f, "%2s", magic) != 1 || magic[0] != 'P' || magic[1] != '6') { fclose(f); return nullptr; }
