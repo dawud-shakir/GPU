@@ -2,22 +2,21 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include <unistd.h>
-#include <limits.h>
+// #include <unistd.h>
+// #include <limits.h>
 
-static
-char* getCurrentWorkingDirectory() {
-    char* cwd = getcwd(NULL, 0);   // libc allocates with malloc
-    if (!cwd) {
-        perror("getCurrentWorkingDirectory");
-        return nullptr;
-    }       
-    else
-        return cwd;                 // caller must free()
-}
+// static
+// char* getCurrentWorkingDirectory() {
+//     char* cwd = getcwd(NULL, 0);   // libc allocates with malloc
+//     if (!cwd) {
+//         perror("getCurrentWorkingDirectory");
+//         return nullptr;
+//     }       
+//     else
+//         return cwd;                 // caller must free()
+// }
 
-//#define ROOT_DIR "/Users/macintosh/UNM/GPU/Resources/Programming Massively Parallel Processors"
-#define ROOT_DIR "."
+#define ROOT_DIR "/usr/GPU/Resources/Programming Massively Parallel Processors"
 const char* input_path = ROOT_DIR "/flowers_rgb.ppm";
 const char* output_path = ROOT_DIR "/flowers_g.pgm";
 
@@ -109,10 +108,6 @@ static void write_pgm_gray(const char* filename, const unsigned char* gray, int 
 // }
 int main()
 {
-    char* root_dir = getCurrentWorkingDirectory();
-    printf("Root dir: %s\n", root_dir);
-    free(root_dir);
-
     int channels = 3;
     cudaMemcpyToSymbol(CHANNELS, &channels, sizeof(channels));
     int width, height;
