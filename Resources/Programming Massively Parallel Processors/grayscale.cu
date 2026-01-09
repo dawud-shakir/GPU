@@ -31,7 +31,7 @@ void colorToGrayscaleConversion(unsigned char* Pout,
 
 // Minimal P6 reader: returns malloc'd RGB buffer (width*height*3) or nullptr on error.
 // Assumes: exactly "P6", maxval 255, no comment lines.
-static uint8_t* read_ppm_rgb_simple(const char* filename, int* width_out, int* height_out) {
+static unsigned char* read_ppm_rgb_simple(const char* filename, int* width_out, int* height_out) {
     FILE* f = fopen(filename, "rb");
     if (!f) return nullptr;
 
@@ -45,7 +45,7 @@ static uint8_t* read_ppm_rgb_simple(const char* filename, int* width_out, int* h
     int c = fgetc(f);
     if (c == EOF) { fclose(f); return nullptr; }
     size_t bytes = (size_t)width * height * 3;
-    uint8_t* buf = (uint8_t*)malloc(bytes);
+    unsigned char* buf = (unsigned char*)malloc(bytes);
     if (!buf) { fclose(f); return nullptr; }
 
     size_t read = fread(buf, 1, bytes, f);
@@ -57,7 +57,7 @@ static uint8_t* read_ppm_rgb_simple(const char* filename, int* width_out, int* h
     return buf;
 }
 
-static void write_pgm_gray(const char* filename, const uint8_t* gray, int width, int height) {
+static void write_pgm_gray(const char* filename, const unsigned char* gray, int width, int height) {
     FILE* f = fopen(filename, "wb");
     if (!f) { perror("fopen"); exit(1); }
     fprintf(f, "P5\n%d %d\n255\n", width, height);
@@ -66,7 +66,7 @@ static void write_pgm_gray(const char* filename, const uint8_t* gray, int width,
 }
 // // ...existing code...
 
-//     static void write_ppm_rgb(const char* filename, const uint8_t* rgba, int dim) {
+//     static void write_ppm_rgb(const char* filename, const unsigned char* rgba, int dim) {
 //     // PPM P6 is RGB; we drop alpha.
 //     std::FILE* f = std::fopen(filename, "wb");
 //     if (!f) {
@@ -77,9 +77,9 @@ static void write_pgm_gray(const char* filename, const uint8_t* gray, int width,
 //     std::fprintf(f, "P6\n%d %d\n255\n", dim, dim);
 
 //     for (int i = 0; i < dim * dim; i++) {
-//         const uint8_t r = rgba[i * 4 + 0];
-//         const uint8_t g = rgba[i * 4 + 1];
-//         const uint8_t b = rgba[i * 4 + 2];
+//         const unsigned char r = rgba[i * 4 + 0];
+//         const unsigned char g = rgba[i * 4 + 1];
+//         const unsigned char b = rgba[i * 4 + 2];
 //         std::fputc(r, f);
 //         std::fputc(g, f);
 //         std::fputc(b, f);
