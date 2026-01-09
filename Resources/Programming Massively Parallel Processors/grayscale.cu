@@ -7,8 +7,7 @@
 
 static
 char* getCurrentWorkingDirectory() {
-    char* cwd = getcwd(NULL, 0));   // libc allocates with malloc
-    
+    char* cwd = getcwd(NULL, 0);   // libc allocates with malloc
     if (!cwd) {
         perror("getCurrentWorkingDirectory");
         return nullptr;
