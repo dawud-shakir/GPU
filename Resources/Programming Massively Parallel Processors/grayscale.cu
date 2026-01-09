@@ -109,7 +109,7 @@ static void write_pgm_gray(const char* filename, const unsigned char* gray, int 
 // }
 int main()
 {
-    char* root_dir = getWorkingDirectory();
+    char* root_dir = getCurrentWorkingDirectory();
     printf("Root dir: %s\n", root_dir);
     free(root_dir);
 
