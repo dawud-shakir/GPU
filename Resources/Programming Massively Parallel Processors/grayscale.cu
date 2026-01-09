@@ -53,9 +53,12 @@ static unsigned char* read_ppm_rgb_simple(const char* filename, int* width_out, 
 
     char magic[3] = {0};
     if (fscanf(f, "%2s", magic) != 1 || magic[0] != 'P' || magic[1] != '6') { fclose(f); return nullptr; }
+    
+    printf("here");
     int width, height, maxval;
     if (fscanf(f, "%d %d %d", &width, &height, &maxval) != 3) { fclose(f); return nullptr; }
     if (maxval != 255) { fclose(f); return nullptr; }
+
 
     // consume single whitespace byte before binary data
     int c = fgetc(f);
