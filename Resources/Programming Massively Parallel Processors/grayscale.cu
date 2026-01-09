@@ -6,14 +6,15 @@
 #include <limits.h>
 
 static
-char* getWorkingDirectory() {
-    char cwd[PATH_MAX];
-    if (!getcwd(NULL, 0)) {
-        perror("getWorkingDirectory");
+char* getCurrentWorkingDirectory() {
+    char* cwd = getcwd(NULL, 0));   // libc allocates with malloc
+    
+    if (!cwd) {
+        perror("getCurrentWorkingDirectory");
         return nullptr;
     }       
     else
-        return cwd;
+        return cwd;                 // caller must free()
 }
 
 //#define ROOT_DIR "/Users/macintosh/UNM/GPU/Resources/Programming Massively Parallel Processors"
@@ -112,7 +113,7 @@ int main()
     char* root_dir = getWorkingDirectory();
     printf("Root dir: %s\n", root_dir);
     free(root_dir);
-    
+
     int channels = 3;
     cudaMemcpyToSymbol(CHANNELS, &channels, sizeof(channels));
     int width, height;
