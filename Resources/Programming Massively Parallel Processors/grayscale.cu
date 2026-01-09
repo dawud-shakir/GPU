@@ -95,7 +95,7 @@ int main()
 
     unsigned char* h_inputImage = read_ppm_rgb_simple(input_path, &width, &height);
     if (!h_inputImage) {
-        printf("Failed to read input image\n");
+        printf("Failed to read input image %s\n", input_path);
         return 1;
     }
 
