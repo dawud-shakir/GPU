@@ -21,7 +21,7 @@ void MatrixMul_RowsKernel(float* M, float* N,
         for (int i = 0; i < Width; ++i) {
             float Pvalue = 0;
             for (int k = 0; k < Width; ++k) {
-                Pvalue += M[(row+i))*Width + k] * N[k*Width + col];
+                Pvalue += M[(row+i)*Width + k] * N[k*Width + col];
             }
 
             P[(row+i)*Width + col] = Pvalue;
