@@ -1,6 +1,38 @@
 #include <cuda_runtime.h>
 #include <stdio.h>
 
+/**************
+For Ch. 3, Exercise 1 in PMPP book
+****************/
+
+__global__
+void MatrixMul_RowsKernel(float* M, float* N,
+                     float* P, int Width) {
+
+    
+    int row = blockIdx.y*blockDim.y + threadIdx.y;
+    int col = blockIdx.x*blockDim.x + threadIdx.x;
+
+    if (row < Width && col < Width) {
+        
+        for (int kernelRow = 0; kernelRow < Width; ++kernelRow)
+            int curRow = row + kernelRow;
+
+            if (curRow < Width) {
+
+                float Pvalue = 0;
+                for (int k = 0; k < Width; ++k) {
+                    Pvalue += M[curRow*Width + k] * N[k*Width + col];
+                }
+
+                P[curRow*Width + col] = Pvalue;
+            }
+        }
+    }
+}
+
+
+
 __global__
 void MatrixMulKernel(float* M, float* N,
                      float* P, int Width) {
@@ -41,6 +73,30 @@ void MatrixMul(float* M, float* N,
 
     cudaMemcpy(P, P_d, size, cudaMemcpyDeviceToHost);
 }
+
+void MatrixMul_Rows(float* M, float* N,
+               float* P, int Width) {
+    int size = Width * Width * sizeof(float);
+
+    float *M_d, *N_d, *P_d;
+    cudaMalloc((void **)&M_d, size);
+    cudaMalloc((void **)&N_d, size);
+    cudaMalloc((void **)&P_d, size);
+
+    cudaMemcpy(M_d, M, size, cudaMemcpyHostToDevice);
+    cudaMemcpy(N_d, N, size, cudaMemcpyHostToDevice);
+    
+    dim3 blockDim(1, 32);
+    dim3 gridDim(ceil(Width / (float)blockDim.x), ceil(Width / (float)blockDim.y));
+
+    printf("blockDim: (%d, %d, %d)\n", blockDim.x, blockDim.y, blockDim.z);
+    printf("gridDim: (%d, %d, %d)\n", gridDim.x, gridDim.y, gridDim.z);
+
+    MatrixMulKernel<<<gridDim, blockDim>>>(M_d, N_d, P_d, Width);
+
+    cudaMemcpy(P, P_d, size, cudaMemcpyDeviceToHost);
+}
+
 
 void MatrixMulCPU(float* M, float* N,
                   float* P, int Width) {
@@ -83,7 +139,7 @@ int main(int argc, char* argv[])
         }
     }
 
-    MatrixMul(M, N, P_gpu, Width);
+    MatrixMul_Rows(M, N, P_gpu, Width);
     MatrixMulCPU(M, N, P_cpu, Width);
 
     bool match = true;
