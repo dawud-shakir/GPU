@@ -61,6 +61,7 @@ int main(int argc, char* argv[])
 {
     // The maximum number of threads in a block is 1024.
     const int Width = argc > 1 ? atoi(argv[1]) : 16;
+    printf("Matrix size: %d x %d\n", Width, Width);
 
     int size = Width * Width * sizeof(float);
     
@@ -87,7 +88,7 @@ int main(int argc, char* argv[])
     for (int i = 0; i < Width * Width; ++i) {
         const float diff = fabs(P_gpu[i] - P_cpu[i]);
         if (diff > 0.00001) {
-            printf("Mismatch at (%d,%d)\n", (int)(i/Width), i%Width);
+            printf("Mismatch at (%d, %d)\n", (int)(i/Width), i%Width);
             printf("diff: %f\n", diff);
             printf("P_gpu=%f, P_cpu=%f\n", P_gpu[i], P_cpu[i]);
             match = false;
