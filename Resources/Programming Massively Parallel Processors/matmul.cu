@@ -73,6 +73,9 @@ int main(int argc, char* argv[])
         for (int j = 0; j < Width; ++j) {
             M[i * Width + j] = i * Width + j;
             N[i * Width + j] = i * Width + j;
+            P_gpu[i] = 0.0f;
+            P_cpu[i] = 0.0f;
+
         }
     }
 
