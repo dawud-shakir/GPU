@@ -85,7 +85,7 @@ void MatrixMul_Rows(float* M, float* N,
     cudaMemcpy(N_d, N, size, cudaMemcpyHostToDevice);
     
     dim3 blockDim(1, 32);
-    dim3 gridDim(ceil(Width / (float)blockDim.x), ceil(Width / (float)blockDim.y));
+    dim3 gridDim(1, ceil(Width / (float)blockDim.y));
 
     printf("blockDim: (%d, %d, %d)\n", blockDim.x, blockDim.y, blockDim.z);
     printf("gridDim: (%d, %d, %d)\n", gridDim.x, gridDim.y, gridDim.z);
