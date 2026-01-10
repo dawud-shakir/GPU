@@ -82,7 +82,7 @@ int main(int argc, char* argv[])
     bool match = true;
     for (int i = 0; i < Width * Width; ++i) {
         if (fabs(P_gpu[i] - P_cpu[i]) > 1e-5) {
-            printf("Mismatch at (%d,%d): P_gpu=%f, P_cpu=%f\n", (int)(i/Width), i%Width, P_gpu[i]. P_cpu[i]);
+            printf("Mismatch at (%d,%d): P_gpu=%f, P_cpu=%f\n", (int)(i/Width), i%Width, P_gpu[i], P_cpu[i]);
             match = false;
             break;
         }
