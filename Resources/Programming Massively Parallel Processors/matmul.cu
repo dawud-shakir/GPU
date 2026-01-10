@@ -44,7 +44,7 @@ void MatrixMul(float* M, float* N,
 
 void MatrixMulCPU(float* M, float* N,
                   float* P, int Width) {
-    for (int i = 0; i < Width, ++i) {
+    for (int i = 0; i < Width; ++i) {
         for (int j = 0; j < Width; ++j) {
             float sum = 0.0f;
             for (int k = 0; k < Width; ++k) {
@@ -76,8 +76,8 @@ int main(int argc, char* argv[])
         }
     }
 
-    MatrixMult(M, N, P_gpu, Width);
-    MatrixMultCPU(M, N, P_cpu, Width);
+    MatrixMul(M, N, P_gpu, Width);
+    MatrixMulCPU(M, N, P_cpu, Width);
 
     bool match = true;
     for (int i = 0; i < Width * Width; ++i) {
