@@ -44,15 +44,15 @@ void MatrixMul(float* M, float* N,
 
 void MatrixMulCPU(float* M, float* N,
                   float* P, int Width) {
-    for (int i = 0; i < Width; ++i) {
-        for (int j = 0; j < Width; ++j) {
+    for (int row = 0; row < Width; ++row) {
+        for (int col = 0; col < Width; ++col) {
             float sum = 0.0f;
             for (int k = 0; k < Width; ++k) {
-                const float a = M[i*Width + k];
-                const float b = N[k*Width + j];
+                const float a = M[row*Width + k];
+                const float b = N[k*Width + col];
                 sum += a*b;
             }
-            P[i*Width + j] = sum;
+            P[row*Width + col] = sum;
         }
     }
 }
@@ -81,8 +81,11 @@ int main(int argc, char* argv[])
 
     bool match = true;
     for (int i = 0; i < Width * Width; ++i) {
-        if (fabs(P_gpu[i] - P_cpu[i]) > 1e-5) {
+        const float diff = fabs(P_gpu[i] - P_cpu[i]);
+        if (diff > 0.00001) {
             printf("Mismatch at (%d,%d): P_gpu=%f, P_cpu=%f\n", (int)(i/Width), i%Width, P_gpu[i], P_cpu[i]);
+            printf("diff: %f\n", diff);
+            print("M[i]: %f, N[i]: %f\n", M[i], N[i]);
             match = false;
             break;
         }
