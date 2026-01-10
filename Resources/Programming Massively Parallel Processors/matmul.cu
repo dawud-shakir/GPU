@@ -73,7 +73,7 @@ int main(int argc, char* argv[])
     for (int row = 0; row < Width; ++row) {
         for (int col = 0; col < Width; ++col) {
             const int index = row * Width + col;
-            M[index] = row * Width + col;
+            M[index] = 4.0f; //row * Width + col;
 
             N[index] = 2.0f; //row * Width + col;
 
