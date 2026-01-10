@@ -15,7 +15,7 @@ void MatrixMul_RowsKernel(float* M, float* N,
 
     if (row < Width && col < Width) {
         
-        for (int kernelRow = 0; kernelRow < Width; ++kernelRow)
+        for (int kernelRow = 0; kernelRow < Width; ++kernelRow) {
             int curRow = row + kernelRow;
 
             if (curRow < Width) {
