@@ -75,8 +75,8 @@ int main(int argc, char* argv[])
             const int index = row * Width + col;
             M[index] = row * Width + col;
 
-            N[index] = row * Width + col;
-            
+            N[index] = 2.0f; //row * Width + col;
+
             P_gpu[index] = 0.0f;
             P_cpu[index] = 0.0f;
 
