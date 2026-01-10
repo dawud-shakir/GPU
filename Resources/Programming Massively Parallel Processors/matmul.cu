@@ -71,9 +71,9 @@ int main(int argc, char* argv[])
 
     for (int row = 0; row < Width; ++row) {
         for (int col = 0; col < Width; ++col) {
-            const int index = row*Width + col;
-            M[index] = i * Width + j;
-            N[index] = i * Width + j;
+            const int index = row * Width + col;
+            M[index] = row * Width + col;
+            N[index] = row * Width + col;
             P_gpu[index] = 0.0f;
             P_cpu[index] = 0.0f;
 
