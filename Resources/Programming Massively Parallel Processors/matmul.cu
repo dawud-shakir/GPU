@@ -69,12 +69,13 @@ int main(int argc, char* argv[])
     float* P_gpu = (float*)malloc(size);
     float* P_cpu = (float*)malloc(size);
 
-    for (int i = 0; i < Width; ++i) {
-        for (int j = 0; j < Width; ++j) {
-            M[i * Width + j] = i * Width + j;
-            N[i * Width + j] = i * Width + j;
-            P_gpu[i] = 0.0f;
-            P_cpu[i] = 0.0f;
+    for (int row = 0; row < Width; ++row) {
+        for (int col = 0; col < Width; ++col) {
+            const int index = row*Width + col;
+            M[index] = i * Width + j;
+            N[index] = i * Width + j;
+            P_gpu[index] = 0.0f;
+            P_cpu[index] = 0.0f;
 
         }
     }
