@@ -60,7 +60,7 @@ void MatrixMulCPU(float* M, float* N,
 int main(int argc, char* argv[])
 {
     // The maximum number of threads in a block is 1024.
-    const int Width = argc > 1 ? atoi(argv[1]) : 1024;
+    const int Width = argc > 1 ? atoi(argv[1]) : 16;
 
     int size = Width * Width * sizeof(float);
     
