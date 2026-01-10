@@ -5,6 +5,9 @@
 For Ch. 3, Exercise 1 in PMPP book
 ****************/
 
+/*****
+Con: Underutilizes threads
+***//
 __global__
 void MatrixMul_RowsKernel(float* M, float* N,
                      float* P, int Width) {
@@ -15,18 +18,13 @@ void MatrixMul_RowsKernel(float* M, float* N,
 
     if (row < Width && col < Width) {
         
-        for (int kernelRow = 0; kernelRow < Width; ++kernelRow) {
-            int curRow = row + kernelRow;
-
-            if (curRow < Width) {
-
-                float Pvalue = 0;
-                for (int k = 0; k < Width; ++k) {
-                    Pvalue += M[curRow*Width + k] * N[k*Width + col];
-                }
-
-                P[curRow*Width + col] = Pvalue;
+        for (int i = 0; i < Width; ++i) {
+            float Pvalue = 0;
+            for (int k = 0; k < Width; ++k) {
+                Pvalue += M[(row+i))*Width + k] * N[k*Width + col];
             }
+
+            P[(row+i)*Width + col] = Pvalue;
         }
     }
 }
@@ -86,7 +84,7 @@ void MatrixMul_Rows(float* M, float* N,
     cudaMemcpy(M_d, M, size, cudaMemcpyHostToDevice);
     cudaMemcpy(N_d, N, size, cudaMemcpyHostToDevice);
     
-    dim3 blockDim(1, 32);
+    dim3 blockDim(32, 1);
     dim3 gridDim(ceil(Width / (float)blockDim.x), ceil(Width / (float)blockDim.y));
 
     printf("blockDim: (%d, %d, %d)\n", blockDim.x, blockDim.y, blockDim.z);
