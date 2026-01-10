@@ -18,13 +18,13 @@ void MatrixMul_RowsKernel(float* M, float* N,
 
     if (row < Width && col < Width) {
         
-        for (int i = 0; i < Width; ++i) {
+        for (int j = 0; j < Width; ++j) {
             float Pvalue = 0;
             for (int k = 0; k < Width; ++k) {
-                Pvalue += M[(row+i)*Width + k] * N[k*Width + col];
+                Pvalue += M[row*Width + k] * N[k*Width + j];
             }
 
-            P[(row+i)*Width + col] = Pvalue;
+            P[row*Width + j] = Pvalue;
         }
     }
 }
