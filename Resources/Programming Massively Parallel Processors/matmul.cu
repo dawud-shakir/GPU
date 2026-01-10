@@ -7,7 +7,7 @@ For Ch. 3, Exercise 1 in PMPP book
 
 /*****
 Con: Underutilizes threads
-***//
+***/
 __global__
 void MatrixMul_RowsKernel(float* M, float* N,
                      float* P, int Width) {
