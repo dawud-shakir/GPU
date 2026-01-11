@@ -78,14 +78,14 @@ int main(int argc, char* argv[])
     float* C = (float*)malloc(size_vector);
     
     for (int row = 0; row < Width; ++row) {
-        C[row] = 2.0f; //row * Width + col;
+        C[row] = 1.0f; //row * Width + col;
         A_gpu[row] = 0.0f;
         A_cpu[row] = 0.0f;
     }
 
     for (int row = 0; row < Width; ++row) {
         for (int col = 0; col < Width; ++col) {
-            B[row * Width + col] = 4.0f; //row * Width + col;
+            B[row * Width + col] = 2.0f; //row * Width + col;
         }
     }
 
