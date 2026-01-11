@@ -35,8 +35,8 @@ void MatrixVectorMul(float* A, float* B,
     cudaMalloc((void **)&B_d, size_matrix);
     cudaMalloc((void **)&C_d, size_vector);
 
-    cudaMemcpy(B_d, B, size, cudaMemcpyHostToDevice);
-    cudaMemcpy(C_d, C, size, cudaMemcpyHostToDevice);
+    cudaMemcpy(B_d, B, siz_matrix, cudaMemcpyHostToDevice);
+    cudaMemcpy(C_d, C, size_vector, cudaMemcpyHostToDevice);
     
     dim3 blockDim(1, 32);
     dim3 gridDim(1, ceil(Width / (float)blockDim.y));
@@ -78,9 +78,9 @@ int main(int argc, char* argv[])
     float* C = (float*)malloc(size_vector);
     
     for (int row = 0; row < Width; ++row) {
-        C[col] = 2.0f; //row * Width + col;
-        A_gpu[col] = 0.0f;
-        A_cpu[col] = 0.0f;
+        C[row] = 2.0f; //row * Width + col;
+        A_gpu[row] = 0.0f;
+        A_cpu[row] = 0.0f;
     }
 
     for (int row = 0; row < Width; ++row) {
