@@ -89,16 +89,16 @@ int main(int argc, char* argv[])
         }
     }
 
-    MatrixVectorMul_Cols(A_gpu, B, C, Width);
+    MatrixVectorMul(A_gpu, B, C, Width);
     MatrixVectorMulCPU(A_cpu, B, C, Width);
 
     bool match = true;
     for (int i = 0; i < Width * Width; ++i) {
-        const float diff = fabs(C_gpu[i] - C_cpu[i]);
+        const float diff = fabs(A_gpu[i] - A_cpu[i]);
         if (diff > 0.00001) {
             printf("Mismatch at (%d, %d)\n", (int)(i/Width), i%Width);
             printf("diff: %f\n", diff);
-            printf("C_gpu=%f, C_cpu=%f\n", C_gpu[i], C_cpu[i]);
+            printf("A_gpu=%f, A_cpu=%f\n", A_gpu[i], A_cpu[i]);
             match = false;
             break;
         }
@@ -111,10 +111,10 @@ int main(int argc, char* argv[])
         printf("GPU and CPU results do not match!\n");
     }
 
-    free(A);
+    free(A_gpu);
+    free(A_cpu);
     free(B);
-    free(C_gpu);
-    free(C_cpu);
+    free(C);
 
     return 0;
 }
