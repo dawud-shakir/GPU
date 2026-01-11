@@ -102,7 +102,7 @@ int main(int argc, char* argv[])
     MatrixVectorMulCPU(A_cpu, B, C, Width);
 
     bool match = true;
-    for (int i = 0; i < Width * Width; ++i) {
+    for (int i = 0; i < Width; ++i) {
         const float diff = fabs(A_gpu[i] - A_cpu[i]);
         if (diff > 0.00001) {
             printf("Mismatch at (%d, 0)\n", i);
