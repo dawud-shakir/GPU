@@ -20,7 +20,7 @@ void MatrixVectorMulKernel(float* A, float* B,
         for (int j = 0; j < Width; ++j) {
             sum += B[row*Width + j] * C[j];
         }
-        A[col] = sum;        
+        A[row] = sum;        
     }
 }
 
@@ -60,6 +60,15 @@ void MatrixVectorMulCPU(float* A, float* B,
         }
         A[row] = sum;
     }
+}
+
+
+void print_vector(float* x, int n, const char* name)
+{
+    printf("%s: ", name);
+    for (int i = 0; i < n; ++i)
+        printf("%.1f ", A[i]);
+    printf("\n");
 }
 
 int main(int argc, char* argv[])
@@ -120,6 +129,9 @@ int main(int argc, char* argv[])
     }
 
     printf("gpu_sum: %.0f, cpu_sum: %.0f\n", gpu_sum, cpu_sum);
+
+    print_vector(A_gpu, Width, "gpu"); 
+    print_vector(A_cpu, Width, "cpu");
 
     free(A_gpu);
     free(A_cpu);
