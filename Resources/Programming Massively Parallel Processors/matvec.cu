@@ -58,7 +58,7 @@ void MatrixVectorMulCPU(float* A, float* B,
             const float c = C[col];
             sum += b*c;
         }
-        A[col] = sum;
+        A[row] = sum;
     }
 }
 
@@ -72,11 +72,11 @@ int main(int argc, char* argv[])
     int size_vector = Width * sizeof(float);
     int size_matrix = Width * Width * sizeof(float);
     
-    float* A = (float*)malloc(size_vector);
+    float* A_gpu = (float*)malloc(size_vector);
+    float* A_cpu = (float*)malloc(size_vector);
     float* B = (float*)malloc(size_matrix);
-    float* C_gpu = (float*)malloc(size_vector);
-    float* C_cpu = (float*)malloc(size_vector);
-
+    float* C = (float*)malloc(size_vector);
+    
     for (int row = 0; row < Width; ++row) {
         C[col] = 2.0f; //row * Width + col;
         A_gpu[col] = 0.0f;
