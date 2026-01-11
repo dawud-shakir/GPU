@@ -35,7 +35,7 @@ void MatrixVectorMul(float* A, float* B,
     cudaMalloc((void **)&B_d, size_matrix);
     cudaMalloc((void **)&C_d, size_vector);
 
-    cudaMemcpy(B_d, B, siz_matrix, cudaMemcpyHostToDevice);
+    cudaMemcpy(B_d, B, size_matrix, cudaMemcpyHostToDevice);
     cudaMemcpy(C_d, C, size_vector, cudaMemcpyHostToDevice);
     
     dim3 blockDim(1, 32);
@@ -89,8 +89,8 @@ int main(int argc, char* argv[])
         }
     }
 
-    MatrixVectorMul_Cols(A, B, C_gpu, Width);
-    MatrixVectorMulCPU(A, B, C_cpu, Width);
+    MatrixVectorMul_Cols(A_gpu, B, C, Width);
+    MatrixVectorMulCPU(A_cpu, B, C, Width);
 
     bool match = true;
     for (int i = 0; i < Width * Width; ++i) {
