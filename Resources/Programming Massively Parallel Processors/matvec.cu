@@ -20,7 +20,7 @@ void MatrixVectorMulKernel(float* A, float* B,
         for (int j = 0; j < Width; ++j) {
             sum += B[row*Width + j] * C[j];
         }
-        A[row] = sum;        
+        A[col] = sum;        
     }
 }
 
@@ -50,7 +50,7 @@ void MatrixVectorMul(float* A, float* B,
 }
 
 void MatrixVectorMulCPU(float* A, float* B,
-                  float* C, int Width) {
+                        float* C, int Width) {
     for (int row = 0; row < Width; ++row) {
         float sum = 0.0f;
         for (int col = 0; col < Width; ++col) {
