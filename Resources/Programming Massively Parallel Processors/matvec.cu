@@ -67,7 +67,7 @@ void print_vector(float* x, int n, const char* name)
 {
     printf("%s: ", name);
     for (int i = 0; i < n; ++i)
-        printf("%.1f ", A[i]);
+        printf("%.1f ", x[i]);
     printf("\n");
 }
 
