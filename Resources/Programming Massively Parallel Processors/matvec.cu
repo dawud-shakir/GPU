@@ -105,7 +105,7 @@ int main(int argc, char* argv[])
     for (int i = 0; i < Width * Width; ++i) {
         const float diff = fabs(A_gpu[i] - A_cpu[i]);
         if (diff > 0.00001) {
-            printf("Mismatch at (%d, %d)\n", (int)(i/Width), i%Width);
+            printf("Mismatch at (%d, 0)\n", i);
             printf("diff: %f\n", diff);
             printf("A_gpu=%f, A_cpu=%f\n", A_gpu[i], A_cpu[i]);
             match = false;
