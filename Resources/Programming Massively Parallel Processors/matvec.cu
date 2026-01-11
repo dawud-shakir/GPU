@@ -111,6 +111,16 @@ int main(int argc, char* argv[])
         printf("GPU and CPU results do not match!\n");
     }
 
+    float cpu_sum = 0f;
+    float gpu_sum = 0f;
+
+    for (int i = 0; i < Width; ++i) {
+        gpu_sum += A_gpu[i];
+        cpu_sum += A_cpu[i];
+    }
+
+    printf("gpu_sum: %.0f, cpu_sum: %.0f\n", gpu_sum, cpu_sum);
+
     free(A_gpu);
     free(A_cpu);
     free(B);
