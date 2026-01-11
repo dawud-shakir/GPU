@@ -108,7 +108,6 @@ int main(int argc, char* argv[])
             printf("diff: %f\n", diff);
             printf("A_gpu=%f, A_cpu=%f\n", A_gpu[i], A_cpu[i]);
             match = false;
-            break;
         }
     }
 
