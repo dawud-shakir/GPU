@@ -20,7 +20,7 @@ void MatrixVectorMulKernel(float* A, float* B,
         for (int j = 0; j < Width; ++j) {
             sum += B[row*Width + j] * C[j];
         }
-        A[j] = sum;        
+        A[row] = sum;        
     }
 }
 
