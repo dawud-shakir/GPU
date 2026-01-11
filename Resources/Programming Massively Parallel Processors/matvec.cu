@@ -62,14 +62,13 @@ void MatrixVectorMulCPU(float* A, float* B,
     }
 }
 
-
-void print_vector(float* x, int n, const char* name)
-{
-    printf("%s: ", name);
-    for (int i = 0; i < n; ++i)
-        printf("%.1f ", x[i]);
-    printf("\n");
-}
+// void print_vector(float* x, int n, const char* name)
+// {
+//     printf("%s: ", name);
+//     for (int i = 0; i < n; ++i)
+//         printf("%.1f ", x[i]);
+//     printf("\n");
+// }
 
 int main(int argc, char* argv[])
 {
@@ -87,14 +86,14 @@ int main(int argc, char* argv[])
     float* C = (float*)malloc(size_vector);
     
     for (int row = 0; row < Width; ++row) {
-        C[row] = 2.0f; //row * Width + col;
+        C[row] = row;
         A_gpu[row] = 0.0f;
         A_cpu[row] = 0.0f;
     }
 
     for (int row = 0; row < Width; ++row) {
         for (int col = 0; col < Width; ++col) {
-            B[row * Width + col] = 2.0f; //row * Width + col;
+            B[row * Width + col] = row * Width + col;
         }
     }
 
@@ -120,18 +119,18 @@ int main(int argc, char* argv[])
         printf("GPU and CPU results do not match!\n");
     }
 
-    float cpu_sum = 0.0f;
-    float gpu_sum = 0.0f;
+    // float cpu_sum = 0.0f;
+    // float gpu_sum = 0.0f;
 
-    for (int i = 0; i < Width; ++i) {
-        gpu_sum += A_gpu[i];
-        cpu_sum += A_cpu[i];
-    }
+    // for (int i = 0; i < Width; ++i) {
+    //     gpu_sum += A_gpu[i];
+    //     cpu_sum += A_cpu[i];
+    // }
 
-    printf("gpu_sum: %.0f, cpu_sum: %.0f\n", gpu_sum, cpu_sum);
+    // printf("gpu_sum: %.0f, cpu_sum: %.0f\n", gpu_sum, cpu_sum);
 
-    print_vector(A_gpu, Width, "gpu"); 
-    print_vector(A_cpu, Width, "cpu");
+    // print_vector(A_gpu, Width, "gpu"); 
+    // print_vector(A_cpu, Width, "cpu");
 
     free(A_gpu);
     free(A_cpu);
