@@ -130,23 +130,23 @@ static unsigned char* read_ppm_rgb(const char* filename, int* width_out, int* he
 
 static void write_ppm_rgb(const char* filename, const unsigned char* rgb, int width, int height) {
     // PPM P6 is RGB; we drop alpha.
-    std::FILE* f = std::fopen(filename, "wb");
+    FILE* f = fopen(filename, "wb");
     if (!f) {
-        std::perror("fopen");
-        std::exit(1);
+        perror("fopen");
+        exit(1);
     }
 
-    std::fprintf(f, "P6\n%d %d\n255\n", width, height);
+    fprintf(f, "P6\n%d %d\n255\n", width, height);
 
     for (int i = 0; i < width * height; ++i) {
         const unsigned char r = rgb[i * 3 + 0];
         const unsigned char g = rgb[i * 3 + 1];
         const unsigned char b = rgb[i * 3 + 2];
-        std::fputc(r, f);
-        std::fputc(g, f);
-        std::fputc(b, f);
+        fputc(r, f);
+        fputc(g, f);
+        fputc(b, f);
     }
 
-    std::fclose(f);
+    fclose(f);
 }
 
