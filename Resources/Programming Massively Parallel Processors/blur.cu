@@ -66,8 +66,7 @@ void blur(unsigned char* Pin_h, unsigned char* Pout_h, int width, int height) {
 
 int main(int argc, char* argv[])
 {
-    int channels = 3;
-    cudaMemcpyToSymbol(CHANNELS, &channels, sizeof(channels));
+
     int width, height;
 
     unsigned char* Pin = read_ppm_rgb(input_path, &width, &height);
