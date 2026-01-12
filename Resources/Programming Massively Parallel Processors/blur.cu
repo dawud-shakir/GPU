@@ -78,9 +78,9 @@ int main(int argc, char* argv[])
     int size = width * height * sizeof(unsigned char);
     unsigned char* Pout = (unsigned char*)malloc(size);
 
-    colorToGrayscaleConversion(Pin, Pout, width, height);
+    blur(Pin, Pout, width, height);
 
-    write_pgm_rgb(output_path, Pout, width, height);
+    write_ppm_rgb(output_path, Pout, width, height);
 
     free(Pin);
     free(Pout);
