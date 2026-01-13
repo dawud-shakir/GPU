@@ -15,49 +15,107 @@ static void write_ppm_rgb(const char* filename, const unsigned char* rgb, int wi
 // 7x7 patch, BLUR_SIZE is set to 3.
 __constant__ int BLUR_SIZE;
 
+// __global__
+// void blurKernel(unsigned char* in,
+//     unsigned char* out, int w, int h) {
+//         int row = blockIdx.y*blockDim.y + threadIdx.y;
+//         int col = blockIdx.x*blockDim.x + threadIdx.x;
+
+//         if (col < w && row < h) {
+//             int pixVal = 0;
+//             int pixels = 0;
+
+//             // Get the average of the surrounding BLUR_SIZE x BLUR_SIZE box
+//             for (int blurRow = -BLUR_SIZE; blurRow < BLUR_SIZE+1; ++blurRow) {
+//                 for (int blurCol = -BLUR_SIZE; blurCol < BLUR_SIZE+1; ++blurCol) {
+//                     int curRow = row + blurRow;
+//                     int curCol = col + blurCol;
+
+//                     // Verify we have a valid image pixel
+//                     if (curRow >= 0 && curRow < h && curCol >= 0 && curCol < w) {
+//                         pixVal += in[curRow*w + curCol];
+//                         ++pixels; // Keep track of number of pixels in the avg
+//                     }
+//                 }
+//             }
+
+//             // Write our new pixel value out
+//             out[row*w + col] = (unsigned char)(pixVal/pixels);
+//         }
+//     }
 __global__
-void blurKernel(unsigned char* in,
-    unsigned char* out, int w, int h) {
+void blurKernel(const unsigned char* in,
+    unsigned char* out, int w, int h, int channels) {
         int row = blockIdx.y*blockDim.y + threadIdx.y;
         int col = blockIdx.x*blockDim.x + threadIdx.x;
 
         if (col < w && row < h) {
-            int pixVal = 0;
             int pixels = 0;
+            int sum[3] = {0, 0, 0};
 
             // Get the average of the surrounding BLUR_SIZE x BLUR_SIZE box
-            for (int blurRow = -BLUR_SIZE; blurRow < BLUR_SIZE+1; ++blurRow) {
-                for (int blurCol = -BLUR_SIZE; blurCol < BLUR_SIZE+1; ++blurCol) {
+            for (int blurRow = -BLUR_SIZE; blurRow <= BLUR_SIZE; ++blurRow) {
+                for (int blurCol = -BLUR_SIZE; blurCol <= BLUR_SIZE; ++blurCol) {
                     int curRow = row + blurRow;
                     int curCol = col + blurCol;
 
                     // Verify we have a valid image pixel
                     if (curRow >= 0 && curRow < h && curCol >= 0 && curCol < w) {
-                        pixVal += in[curRow*w + curCol];
-                        ++pixels; // Keep track of number of pixels in the avg
+                        int base = (curRow * w + curCol) * channels;
+                        for (int c = 0; c < channels; ++c)
+                            sum[c] += in[base + c];
+                        ++pixels;
                     }
                 }
             }
 
-            // Write our new pixel value out
-            out[row*w + col] = (unsigned char)(pixVal/pixels);
+            // Write our new pixel value out (for each channel)
+            int outBase = (row * w + col) * channels;
+            for (int c = 0; c < channels; ++c)
+                out[outBase + c] = (unsigned char)(sum[c] / pixels);
         }
     }
+// void blur(unsigned char* Pin_h, unsigned char* Pout_h, int width, int height) {
+//     int size = width * height * sizeof(unsigned char);
+//     unsigned char *Pin_d, *Pout_d;
 
+//     cudaMalloc((void **)&Pin_d, size);
+//     cudaMalloc((void **)&Pout_d, size);
+
+//     cudaMemcpy(Pin_d, Pin_h, size, cudaMemcpyHostToDevice);
+    
+//     dim3 blockDim(32, 32);
+//     dim3 gridDim(ceil(width / blockDim.x), ceil(height / blockDim.y));
+
+//     // Launch ceil(width/32) x ceil(height/32) blocks of 32 x 32 threads each
+//     blurKernel<<<gridDim, blockDim>>>(Pout_d, Pin_d, width, height);
+
+//     cudaMemcpy(Pout_h, Pout_d, size, cudaMemcpyDeviceToHost);
+     
+//     cudaFree(Pin_d);
+//     cudaFree(Pout_d);
+// }
 void blur(unsigned char* Pin_h, unsigned char* Pout_h, int width, int height) {
-    int size = width * height * sizeof(unsigned char);
-    unsigned char *Pin_d, *Pout_d;
+    const int channels = 3;
+    size_t size = (size_t)width * height * channels * sizeof(unsigned char);
+    unsigned char *Pin_d = nullptr, *Pout_d = nullptr;
 
     cudaMalloc((void **)&Pin_d, size);
     cudaMalloc((void **)&Pout_d, size);
 
     cudaMemcpy(Pin_d, Pin_h, size, cudaMemcpyHostToDevice);
-    
-    dim3 blockDim(32, 32);
-    dim3 gridDim(ceil(width / blockDim.x), ceil(height / blockDim.y));
 
-    // Launch ceil(width/32) x ceil(height/32) blocks of 32 x 32 threads each
-    blurKernel<<<gridDim, blockDim>>>(Pout_d, Pin_d, width, height);
+    // set blur radius (e.g., 1 -> 3x3 kernel)
+    int hostBlurSize = 1;
+    cudaMemcpyToSymbol(BLUR_SIZE, &hostBlurSize, sizeof(int));
+
+    dim3 blockDim(32, 32);
+    dim3 gridDim((width + blockDim.x - 1) / blockDim.x,
+                 (height + blockDim.y - 1) / blockDim.y);
+
+    // Launch blocks
+    blurKernel<<<gridDim, blockDim>>>(Pin_d, Pout_d, width, height, channels);
+    cudaDeviceSynchronize(); // catch errors
 
     cudaMemcpy(Pout_h, Pout_d, size, cudaMemcpyDeviceToHost);
      
@@ -144,8 +202,8 @@ static void write_ppm_rgb(const char* filename, const unsigned char* rgb, int wi
 
     for (int i = 0; i < width * height; ++i) {
         const unsigned char r = rgb[i * 3 + 0];
-        const unsigned char g = rgb[i * 3 + 0];
-        const unsigned char b = rgb[i * 3 + 0];
+        const unsigned char g = rgb[i * 3 + 1];
+        const unsigned char b = rgb[i * 3 + 2];
         
         
         fputc(r, f);
