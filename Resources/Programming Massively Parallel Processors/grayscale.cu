@@ -8,13 +8,13 @@ const char* output_path = ROOT_DIR "/flowers_g.pgm";
 static unsigned char* read_ppm_rgb_simple(const char* filename, int* width_out, int* height_out);
 static void write_pgm_gray(const char* filename, const unsigned char* gray, int width, int height);
 
-__constant__ int CHANNELS;
+// __constant__ int CHANNELS;
 
 // The input image is encoded as unsigned chars [0, 255]
 // Each pixel is 3 consecutive chars for the 3 channels (RGB)
 __global__
 void colorToGrayscaleConversionKernel(unsigned char* Pout,
-    unsigned char* Pin, int width, int height) {
+    unsigned char* Pin, int width, int height, int channels) {
         int col = blockIdx.x * blockDim.x + threadIdx.x;
         int row = blockIdx.y * blockDim.y + threadIdx.y;
 
@@ -24,7 +24,7 @@ void colorToGrayscaleConversionKernel(unsigned char* Pout,
 
             // One can think of the RGB image having CHANNEL
             // times more columns than the gray scale image
-            int rgbOffset = grayscaleOffset * CHANNELS;
+            int rgbOffset = grayscaleOffset * channels;
             unsigned char r = Pin[rgbOffset    ];   // Red value
             unsigned char g = Pin[rgbOffset + 1];   // Green value
             unsigned char b = Pin[rgbOffset + 2];   // Blue value
@@ -39,6 +39,7 @@ void colorToGrayscaleConversionKernel(unsigned char* Pout,
     }
 
 void colorToGrayscaleConversion(unsigned char* Pin_h, unsigned char* Pout_h, int width, int height) {
+    const int channels = 3;
     int size = width * height * sizeof(unsigned char);
     unsigned char *Pin_d, *Pout_d;
 
@@ -51,7 +52,7 @@ void colorToGrayscaleConversion(unsigned char* Pin_h, unsigned char* Pout_h, int
     dim3 gridDim(ceil(width / blockDim.x), ceil(height / blockDim.y));
 
     // Launch ceil(width/32) x ceil(height/32) blocks of 32 x 32 threads each
-    colorToGrayscaleConversionKernel<<<gridDim, blockDim>>>(Pout_d, Pin_d, width, height);
+    colorToGrayscaleConversionKernel<<<gridDim, blockDim>>>(Pout_d, Pin_d, width, height, channels);
 
     
     cudaMemcpy(Pout_h, Pout_d, size, cudaMemcpyDeviceToHost);
@@ -62,9 +63,9 @@ void colorToGrayscaleConversion(unsigned char* Pin_h, unsigned char* Pout_h, int
 
 int main(int argc, char* argv[])
 {
-    int channels = 3;
-    cudaMemcpyToSymbol(CHANNELS, &channels, sizeof(channels));
-    int width, height;
+    // int channels = 3;
+    // cudaMemcpyToSymbol(CHANNELS, &channels, sizeof(channels));
+    // int width, height;
 
     unsigned char* Pin = read_ppm_rgb_simple(input_path, &width, &height);
     if (!Pin) {
