@@ -125,6 +125,8 @@ void blur(unsigned char* Pin_h, unsigned char* Pout_h, int width, int height) {
 
 int main(int argc, char* argv[])
 {
+    int blur_size = 3;
+    cudaMemcpyToSymbol(BLUR_SIZE, &blur_size, sizeof(int));
 
     int width, height;
 
