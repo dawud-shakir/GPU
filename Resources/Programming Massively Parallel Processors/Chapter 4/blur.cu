@@ -135,7 +135,7 @@ int main(int argc, char* argv[])
     }
     printf("Read file %s\n", input_path);
 
-    int size = width * height * sizeof(unsigned char);
+    int size = width * height * 3 * sizeof(unsigned char);
     unsigned char* Pout = (unsigned char*)malloc(size);
 
     blur(Pin, Pout, width, height);
