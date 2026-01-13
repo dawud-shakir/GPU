@@ -46,7 +46,7 @@ static void write_ppm_rgb(const char* filename, const unsigned char* rgb, int wi
 __global__
 void blurKernel(const unsigned char* in,
     unsigned char* out, int w, int h, int channels) {
-        const int BLUR_SIZE = 3;
+        const int BLUR_SIZE = 1;
 
         int row = blockIdx.y*blockDim.y + threadIdx.y;
         int col = blockIdx.x*blockDim.x + threadIdx.x;
