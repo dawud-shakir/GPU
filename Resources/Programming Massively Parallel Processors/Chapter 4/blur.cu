@@ -143,7 +143,8 @@ int main(int argc, char* argv[])
     int size = width * height * 3 * sizeof(unsigned char);
     unsigned char* Pout = (unsigned char*)malloc(size);
 
-    blur(Pin, Pout, width, height);
+    int blur_size = 20;
+    blur(Pin, Pout, width, height, blur_size);
 
     write_ppm_rgb(output_path, Pout, width, height);
     printf("Wrote file to %s\n", output_path);
