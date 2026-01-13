@@ -6,7 +6,8 @@ const char* input_path = ROOT_DIR "/flowers_rgb.ppm";
 const char* output_path = ROOT_DIR "/flowers_blur.ppm";
 
 static unsigned char* read_ppm_rgb(const char* filename, int* width_out, int* height_out);
-static void write_ppm_rgb(const char* filename, const unsigned char* gray, int width, int height);
+static void write_pgm_gray(const char* filename, const unsigned char* gray, int width, int height);
+static void write_ppm_rgb(const char* filename, const unsigned char* rgb, int width, int height);
 
 // The value of BLURE_SIZE gives the number of pixels on each side (radius) of
 // the patch and 2*BLURE_SIZE+1 gives the total number of pixels across one dimension
@@ -81,7 +82,7 @@ int main(int argc, char* argv[])
 
     blur(Pin, Pout, width, height);
 
-    write_ppm_rgb(output_path, Pout, width, height);
+    write_pgm_gray(output_path, Pout, width, height);
     printf("Wrote file to %s\n", output_path);
 
 
@@ -123,13 +124,13 @@ static unsigned char* read_ppm_rgb(const char* filename, int* width_out, int* he
     return buf;
 }
 
-// static void write_ppm_rgb(const char* filename, const unsigned char* gray, int width, int height) {
-//     FILE* f = fopen(filename, "wb");
-//     if (!f) { perror("fopen"); exit(1); }
-//     fprintf(f, "P5\n%d %d\n255\n", width, height);
-//     fwrite(gray, 1, width * height, f);
-//     fclose(f);
-// }
+static void write_pgm_gray(const char* filename, const unsigned char* gray, int width, int height) {
+    FILE* f = fopen(filename, "wb");
+    if (!f) { perror("fopen"); exit(1); }
+    fprintf(f, "P5\n%d %d\n255\n", width, height);
+    fwrite(gray, 1, width * height, f);
+    fclose(f);
+}
 
 static void write_ppm_rgb(const char* filename, const unsigned char* rgb, int width, int height) {
     // PPM P6 is RGB; we drop alpha.
