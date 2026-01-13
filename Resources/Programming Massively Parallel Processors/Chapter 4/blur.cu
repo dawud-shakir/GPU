@@ -16,7 +16,7 @@ __constant__ int BLUR_SIZE;
 
 __global__
 void blurKernel(unsigned char* in,
-    unsigned char* out, int w, int h, int channels, int color_offset) {
+    unsigned char* out, int w, int h) {
         int row = blockIdx.y*blockDim.y + threadIdx.y;
         int col = blockIdx.x*blockDim.x + threadIdx.x;
 
@@ -32,16 +32,14 @@ void blurKernel(unsigned char* in,
 
                     // Verify we have a valid image pixel
                     if (curRow >= 0 && curRow < h && curCol >= 0 && curCol < w) {
-                        int pixel_offset = curRow*w + curCol;
-                        pixVal += in[pixel_offset*channels + color_offset];
+                        pixVal += in[curRow*w + curCol];
                         ++pixels; // Keep track of number of pixels in the avg
                     }
                 }
             }
 
             // Write our new pixel value out
-            int pixel_offset = row*w + col;
-            out[pixel_offset*channels + color_offset] = (unsigned char)(pixVal/pixels);
+            out[row*w + col] = (unsigned char)(pixVal/pixels);
         }
     }
 
@@ -58,10 +56,7 @@ void blur(unsigned char* Pin_h, unsigned char* Pout_h, int width, int height) {
     dim3 gridDim(ceil(width / blockDim.x), ceil(height / blockDim.y));
 
     // Launch ceil(width/32) x ceil(height/32) blocks of 32 x 32 threads each
-    blurKernel<<<gridDim, blockDim>>>(Pout_d, Pin_d, width, height, 3, 0);
-    blurKernel<<<gridDim, blockDim>>>(Pout_d, Pin_d, width, height, 3, 1);
-    blurKernel<<<gridDim, blockDim>>>(Pout_d, Pin_d, width, height, 3, 2);
-
+    blurKernel<<<gridDim, blockDim>>>(Pout_d, Pin_d, width, height);
 
     cudaMemcpy(Pout_h, Pout_d, size, cudaMemcpyDeviceToHost);
      
@@ -81,7 +76,7 @@ int main(int argc, char* argv[])
     }
     printf("Read file %s\n", input_path);
 
-    int size = width * height * sizeof(unsigned char) * 3;
+    int size = width * height * sizeof(unsigned char);
     unsigned char* Pout = (unsigned char*)malloc(size);
 
     blur(Pin, Pout, width, height);
