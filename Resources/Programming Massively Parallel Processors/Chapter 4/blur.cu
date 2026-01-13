@@ -45,8 +45,8 @@ static void write_ppm_rgb(const char* filename, const unsigned char* rgb, int wi
 //     }
 __global__
 void blurKernel(const unsigned char* in,
-    unsigned char* out, int w, int h, int channels) {
-        const int BLUR_SIZE = 10;
+    unsigned char* out, int w, int h, int channels, int blur_size) {
+
 
         int row = blockIdx.y*blockDim.y + threadIdx.y;
         int col = blockIdx.x*blockDim.x + threadIdx.x;
@@ -55,9 +55,9 @@ void blurKernel(const unsigned char* in,
             int pixels = 0;
             int sum[3] = {0, 0, 0};
 
-            // Get the average of the surrounding BLUR_SIZE x BLUR_SIZE box
-            for (int blurRow = -BLUR_SIZE; blurRow <= BLUR_SIZE; ++blurRow) {
-                for (int blurCol = -BLUR_SIZE; blurCol <= BLUR_SIZE; ++blurCol) {
+            // Get the average of the surrounding blur_size x blur_size box
+            for (int blurRow = -blur_size; blurRow <= blur_size; ++blurRow) {
+                for (int blurCol = -blur_size; blurCol <= blur_size; ++blurCol) {
                     int curRow = row + blurRow;
                     int curCol = col + blurCol;
 
@@ -97,7 +97,7 @@ void blurKernel(const unsigned char* in,
 //     cudaFree(Pin_d);
 //     cudaFree(Pout_d);
 // }
-void blur(unsigned char* Pin_h, unsigned char* Pout_h, int width, int height) {
+void blur(unsigned char* Pin_h, unsigned char* Pout_h, int width, int height, int blur_size) {
     const int channels = 3;
     size_t size = (size_t)width * height * channels * sizeof(unsigned char);
     unsigned char *Pin_d = nullptr, *Pout_d = nullptr;
@@ -116,7 +116,7 @@ void blur(unsigned char* Pin_h, unsigned char* Pout_h, int width, int height) {
                  (height + blockDim.y - 1) / blockDim.y);
 
     // Launch blocks
-    blurKernel<<<gridDim, blockDim>>>(Pin_d, Pout_d, width, height, channels);
+    blurKernel<<<gridDim, blockDim>>>(Pin_d, Pout_d, width, height, channels, blur_size);
     cudaDeviceSynchronize(); // catch errors
 
     cudaMemcpy(Pout_h, Pout_d, size, cudaMemcpyDeviceToHost);
