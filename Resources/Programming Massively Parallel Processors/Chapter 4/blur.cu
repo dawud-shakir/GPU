@@ -13,7 +13,7 @@ static void write_ppm_rgb(const char* filename, const unsigned char* rgb, int wi
 // the patch and 2*BLURE_SIZE+1 gives the total number of pixels across one dimension
 // of the patch. For example, for a 3x3 patch, BLUR_SIZE = is set to 1, whereas for a
 // 7x7 patch, BLUR_SIZE is set to 3.
-__constant__ int BLUR_SIZE;
+// __constant__ int BLUR_SIZE;
 
 // __global__
 // void blurKernel(unsigned char* in,
@@ -108,8 +108,8 @@ void blur(unsigned char* Pin_h, unsigned char* Pout_h, int width, int height) {
     cudaMemcpy(Pin_d, Pin_h, size, cudaMemcpyHostToDevice);
 
     // set blur radius (e.g., 1 -> 3x3 kernel)
-    int hostBlurSize = 1;
-    cudaMemcpyToSymbol(BLUR_SIZE, &hostBlurSize, sizeof(int));
+    // int hostBlurSize = 1;
+    // cudaMemcpyToSymbol(BLUR_SIZE, &hostBlurSize, sizeof(int));
 
     dim3 blockDim(32, 32);
     dim3 gridDim((width + blockDim.x - 1) / blockDim.x,
@@ -127,9 +127,9 @@ void blur(unsigned char* Pin_h, unsigned char* Pout_h, int width, int height) {
 
 int main(int argc, char* argv[])
 {
-    int blur_size = 3;
-    cudaMemcpyToSymbol(BLUR_SIZE, &blur_size, sizeof(blur_size));
-    printf("BLUR_SIZE=%d\n", BLUR_SIZE);
+    // int blur_size = 3;
+    // cudaMemcpyToSymbol(BLUR_SIZE, &blur_size, sizeof(blur_size));
+    // printf("BLUR_SIZE=%d\n", BLUR_SIZE);
 
     int width, height;
 
