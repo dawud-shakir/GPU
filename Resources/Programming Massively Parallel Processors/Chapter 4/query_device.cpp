@@ -10,7 +10,7 @@ int main(int argc, char* argv[])
 
     cudaDeviceProp devProp;
     for (unsigned int i = 0; i < devCount; ++i) {
-        cudaDeviceProperties(&devProp, i);
+        cudaGetDeviceProperties(&devProp, i);
 
         // Decide if device has sufficient resources/capabilities
 
