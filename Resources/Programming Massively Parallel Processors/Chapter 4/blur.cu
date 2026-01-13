@@ -144,9 +144,11 @@ static void write_ppm_rgb(const char* filename, const unsigned char* rgb, int wi
     fprintf(f, "P6\n%d %d\n255\n", width, height);
 
     for (int i = 0; i < width * height; ++i) {
-        const unsigned char r = rgb[i * 4 + 0];
-        const unsigned char g = rgb[i * 4 + 1];
-        const unsigned char b = rgb[i * 4 + 2];
+        const unsigned char r = rgb[i * 3 + 0];
+        const unsigned char g = rgb[i * 3 + 1];
+        const unsigned char b = rgb[i * 3 + 2];
+        
+        
         fputc(r, f);
         fputc(g, f);
         fputc(b, f);
