@@ -74,8 +74,10 @@ int main(int argc, char* argv[])
         printf("Failed to read input image %s\n", input_path);
         return 1;
     }
+    printf("Read file %s\n", input_path);
 
     write_ppm_rgb(output_path, Pin, width, height);
+    printf("Wrote file to %s\n", output_path);
     free(Pin);
 
     // int size = width * height * sizeof(unsigned char);
