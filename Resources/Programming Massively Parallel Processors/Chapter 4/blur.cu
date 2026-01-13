@@ -82,7 +82,7 @@ int main(int argc, char* argv[])
 
     blur(Pin, Pout, width, height);
 
-    write_pgm_gray(output_path, Pout, width, height);
+    write_ppm_rgb(output_path, Pout, width, height);
     printf("Wrote file to %s\n", output_path);
 
 
@@ -144,8 +144,8 @@ static void write_ppm_rgb(const char* filename, const unsigned char* rgb, int wi
 
     for (int i = 0; i < width * height; ++i) {
         const unsigned char r = rgb[i * 3 + 0];
-        const unsigned char g = rgb[i * 3 + 1];
-        const unsigned char b = rgb[i * 3 + 2];
+        const unsigned char g = rgb[i * 3 + 0];
+        const unsigned char b = rgb[i * 3 + 0];
         
         
         fputc(r, f);
