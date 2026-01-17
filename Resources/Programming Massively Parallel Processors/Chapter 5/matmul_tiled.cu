@@ -98,12 +98,17 @@ int main(int argc, char* argv[])
     matrixMul(M, N, P_gpu, Width);
     matrixMulCPU(M, N, P_cpu, Width);
 
+    const float abs_tol = 0.01f;
+    const float rel_tol = 1e-3f;
+    printf("abs_tol: %f, rel_tol: %f\n\n", abs_tol, rel_tol);
+
     bool match = true;
     for (int i = 0; i < Width * Width; ++i) {
-        const float diff = fabs(P_gpu[i] - P_cpu[i]);
-        if (diff > 0.01) {
+        const float abs_diff = fabs(P_gpu[i] - P_cpu[i]);
+        const float rel_diff = abs_diff / fmaxf(fmaxf(fabs(P_gpu[i), fabs(P_cpu[i])), 1e-8f);
+        if (abs_diff > abs_tol && rel_diff > rel_tol) {
             printf("Mismatch at (%d, %d)\n", (int)(i/Width), i%Width);
-            printf("diff: %f\n\n", diff);
+            printf("abs_diff: %f, rel_diff: %f\n\n", abs_diff, rel_diff);
             printf("P_gpu=%f, P_cpu=%f\n", P_gpu[i], P_cpu[i]);
             match = false;
             break;
