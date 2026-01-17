@@ -98,8 +98,8 @@ int main(int argc, char* argv[])
     matrixMul(M, N, P_gpu, Width);
     matrixMulCPU(M, N, P_cpu, Width);
 
-    const float abs_tol = 0.01f;
-    const float rel_tol = 1e-3f;
+    const float abs_tol = 1e-6f;    // 1e-3
+    const float rel_tol = 1e-5f;    // 1e-3
     printf("abs_tol: %f, rel_tol: %f\n\n", abs_tol, rel_tol);
 
     bool match = true;
