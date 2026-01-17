@@ -105,7 +105,7 @@ int main(int argc, char* argv[])
     bool match = true;
     for (int i = 0; i < Width * Width; ++i) {
         const float abs_diff = fabs(P_gpu[i] - P_cpu[i]);
-        const float rel_diff = abs_diff / fmaxf(fmaxf(fabs(P_gpu[i), fabs(P_cpu[i])), 1e-8f);
+        const float rel_diff = abs_diff / fmaxf(fmaxf(fabs(P_gpu[i]), fabs(P_cpu[i])), 1e-8f);
         if (abs_diff > abs_tol && rel_diff > rel_tol) {
             printf("Mismatch at (%d, %d)\n", (int)(i/Width), i%Width);
             printf("abs_diff: %f, rel_diff: %f\n\n", abs_diff, rel_diff);
