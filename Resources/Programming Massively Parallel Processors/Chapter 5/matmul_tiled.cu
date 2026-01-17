@@ -1,5 +1,6 @@
 #include <cuda_runtime.h>
-#include <stdlib.h>
+#include <stdlib.h>     // rand
+#include <stdio.h>      // printf
 
 #define TILE_WIDTH 16
 
@@ -27,7 +28,7 @@ __global__ void matrixMulKernel(float* M, float* N, float* P, int Width)
 
         for (int k = 0; k < TILE_WIDTH; ++k)
             Pvalue += Mds[ty][k] * Nds[k][tx]; // blockDim is TILE_WIDTH x TILE_WIDTH
-        syncthreads();
+        __syncthreads();
     }
     P[Row*Width + Col] = Pvalue;
 }
