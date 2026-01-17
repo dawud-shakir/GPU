@@ -47,6 +47,10 @@ void MatrixMul_Rows(float* M, float* N,
     MatrixMul_RowsKernel<<<gridDim, blockDim>>>(M_d, N_d, P_d, Width);
 
     cudaMemcpy(P, P_d, size, cudaMemcpyDeviceToHost);
+
+    cudaFree(M_d);
+    cudaFree(N_d);
+    cudaFree(P_d);
 }
 
 /*****
@@ -95,6 +99,10 @@ void MatrixMul_Cols(float* M, float* N,
     MatrixMul_ColsKernel<<<gridDim, blockDim>>>(M_d, N_d, P_d, Width);
 
     cudaMemcpy(P, P_d, size, cudaMemcpyDeviceToHost);
+
+    cudaFree(M_d);
+    cudaFree(N_d);
+    cudaFree(P_d);
 }
 
 /*****
@@ -140,6 +148,10 @@ void MatrixMul(float* M, float* N,
     MatrixMulKernel<<<gridDim, blockDim>>>(M_d, N_d, P_d, Width);
 
     cudaMemcpy(P, P_d, size, cudaMemcpyDeviceToHost);
+
+    cudaFree(M_d);
+    cudaFree(N_d);
+    cudaFree(P_d);
 }
 
 void MatrixMulCPU(float* M, float* N,
