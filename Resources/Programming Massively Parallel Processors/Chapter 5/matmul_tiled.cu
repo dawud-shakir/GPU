@@ -1,6 +1,7 @@
 #include <cuda_runtime.h>
 #include <stdlib.h>     // rand
 #include <stdio.h>      // printf
+#include <float.h>      // FLT_EPSILON
 
 #define TILE_WIDTH 16
 
@@ -98,8 +99,14 @@ int main(int argc, char* argv[])
     matrixMul(M, N, P_gpu, Width);
     matrixMulCPU(M, N, P_cpu, Width);
 
-    const float abs_tol = 1e-6f;    // 1e-3
-    const float rel_tol = 1e-5f;    // 1e-3
+    // const float abs_tol = 1e-6f;    // 1e-3
+    // const float rel_tol = 1e-5f;    // 1e-3
+
+    const float eps = FLT_EPSILON;                   // ~1.19e-7
+    float max_val = 0.f;
+    for (int i = 0; i < Width*Width; ++i) max_val = fmaxf(max_val, fabs(P_cpu[i]));
+    float abs_tol = eps * Width * max_val * 10.f;    // scale factor (10) as safety margin
+    float rel_tol = fmaxf(1e-5f, eps * Width * 10.f);
     printf("abs_tol: %f, rel_tol: %f\n\n", abs_tol, rel_tol);
 
     bool match = true;
