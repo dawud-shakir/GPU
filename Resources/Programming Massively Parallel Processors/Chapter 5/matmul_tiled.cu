@@ -140,7 +140,7 @@ void matrixMul_dynamic_smem(float* M, float* N, float* P, int Width)
     size_t size = Width * Width * sizeof(float);
     
     size_t smem_size = 2 * TILE_WIDTH * TILE_WIDTH * sizeof(float);
-    printf("TILE_WIDTH: %zu, smem bytes: %zu\n", TILE_WIDTH, smem_size);
+    printf("TILE_WIDTH: %d, smem bytes: %zu\n", TILE_WIDTH, smem_size);
 
     float *M_d, *N_d, *P_d;
     cudaMalloc((void **)&M_d, size);
