@@ -52,10 +52,40 @@ void matrixMul(float* M, float* N, float* P, int Width) {
     printf("blockDim: (%d, %d, %d)\n", blockDim.x, blockDim.y, blockDim.z);
     printf("gridDim: (%d, %d, %d)\n", gridDim.x, gridDim.y, gridDim.z);
 
+
+    // Warm
+    const int warmups = 1;
+
+    for (int i = 0; i < warmups; ++i)
+        matrixMulKernel<<<gridDim, blockDim>>>(M_d, N_d, P_d, Width);
+
+
+    cudaEvent_t start, stop;
+    cudaEventCreate(&event);
+    cudaEventCrease(&stop);
+
+    int iters = 5;
+    cudaEventRecord(start);
     matrixMulKernel<<<gridDim, blockDim>>>(M_d, N_d, P_d, Width);
+
+    cudaEventRecord(stop);
+    cudaEventSynchronize(stop);
+
+    float ms = 0.0;
+    cudaEventElaspedTime(&ms, start, stop);
+    double avg_ms = ms / iters;
+
+    double flops = 2.0 * (double)Width * (double)Width * (double)Width;
+    double gflops = (flops / (avg_ms / 1e3)) / 1e9;
+
+    printf("matrixMulKernel\n");
+    printf("Avg GEMM time: %.3f ms\n", avg_ms);
+    printf("Throughput:    %.1f GFLOP/s\n", gflops);
+
 
     cudaMemcpy(P, P_d, size, cudaMemcpyDeviceToHost);
 
+    cudaEventDestroy(start); cudaEventDestroy(stop);
     cudaFree(M_d);
     cudaFree(N_d);
     cudaFree(P_d);
