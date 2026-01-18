@@ -140,12 +140,12 @@ void matrixMul_dynamic_smem(float* M, float* N, float* P, int Width)
     size_t size = 2 * TILE_WIDTH * TILE_WIDTH * sizeof(float);
     
     float *M_d, *N_d, *P_d;
-    cudaMalloc((void **)&M_d, size/2);
-    cudaMalloc((void **)&N_d, size/2);
-    cudaMalloc((void **)&P_d, size/2);
+    cudaMalloc((void **)&M_d, Width*Width);
+    cudaMalloc((void **)&N_d, Width*Width);
+    cudaMalloc((void **)&P_d, Width*Width);
 
-    cudaMemcpy(M_d, M, size/2, cudaMemcpyHostToDevice);
-    cudaMemcpy(N_d, N, size/2, cudaMemcpyHostToDevice);
+    cudaMemcpy(M_d, M, Width*Width, cudaMemcpyHostToDevice);
+    cudaMemcpy(N_d, N, Width*Width, cudaMemcpyHostToDevice);
     
     dim3 blockDim(TILE_WIDTH, TILE_WIDTH);
     dim3 gridDim(ceil(Width / (float)blockDim.x), ceil(Width / (float)blockDim.y));
