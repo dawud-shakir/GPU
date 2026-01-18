@@ -139,7 +139,7 @@ int main(int argc, char* argv[])
         }
     }
 
-    matrixMul(M, N, P_gpu, Width);
+    matrixMul_timed(M, N, P_gpu, Width);
     matrixMulCPU(M, N, P_cpu, Width);
 
     // const float abs_tol = 1e-6f;    // 1e-3
@@ -218,7 +218,7 @@ void matrixMul_timed(float* M, float* N, float* P, int Width) {
 
     int iters = 5;
     cudaEventRecord(start);
-    matrixMulKernel<<<gridDim, blockDim>>>(M_d, N_d, P_d, Width);
+    KERNEL<<<gridDim, blockDim>>>(M_d, N_d, P_d, Width);
 
     cudaEventRecord(stop);
     cudaEventSynchronize(stop);
