@@ -105,7 +105,7 @@ static void matrixMul_timed(float* M, float* N, float* P, int Width);
 
 __global__ void matrixMulKernel_external_smem(float* M, float* N, float* P, int Width, unsigned Mds_sz, unsigned Nds_sz)
 {
-    extern __shared__ float Mds_Nds[];
+    extern __shared__ char Mds_Nds[];
     
     float* Mds = (float *) Mds_Nds;
     float* Nds = (float *) Mds_Nds + Mds_sz;
