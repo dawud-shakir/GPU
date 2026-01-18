@@ -23,6 +23,34 @@ __global__ void matrixMulKernel(float* M, float* N, float* P, int Width)
     for (int ph = 0; ph < Width/TILE_WIDTH; ++ph)
     {
         // Collaborative loading of M and N tiles into shared memory
+        Mds[ty][tx] = M[Row*Width +  ph*TILE_WIDTH + tx];
+        Nds[ty][tx] = N[(ph*TILE_WIDTH + ty)*Width + Col];
+        __syncthreads();
+
+        for (int k = 0; k < TILE_WIDTH; ++k)
+            Pvalue += Mds[ty][k] * Nds[k][tx]; // blockDim is TILE_WIDTH x TILE_WIDTH
+        __syncthreads();
+    }
+    P[Row*Width + Col] = Pvalue;
+}
+
+__global__ void matrixMulKernel_boundries(float* M, float* N, float* P, int Width)
+{
+    __shared__ float Mds[TILE_WIDTH][TILE_WIDTH];
+    __shared__ float Nds[TILE_WIDTH][TILE_WIDTH];
+
+    int bx = blockIdx.x;    int by = blockIdx.y;
+    int tx = threadIdx.x;   int ty = threadIdx.y;
+
+    // Identify the row and column of the P element to work on
+    int Row = by * TILE_WIDTH + ty;
+    int Col = bx * TILE_WIDTH + tx;
+
+    // Loop over the M and N tiles required to compute P element
+    float Pvalue = 0;
+    for (int ph = 0; ph < Width/TILE_WIDTH; ++ph)
+    {
+        // Collaborative loading of M and N tiles into shared memory
         if (Row < Width && (ph*TILE_WIDTH + tx < Width))
             Mds[ty][tx] = M[Row*Width +  ph*TILE_WIDTH + tx];
         else
@@ -43,6 +71,10 @@ __global__ void matrixMulKernel(float* M, float* N, float* P, int Width)
         P[Row*Width + Col] = Pvalue;
 }
 
+#ifndef KERNEL
+#define KERNEL matrixMulKernel_boundries
+#endif
+
 void matrixMul(float* M, float* N, float* P, int Width) {
     int size = Width * Width * sizeof(float);
 
@@ -61,7 +93,7 @@ void matrixMul(float* M, float* N, float* P, int Width) {
     printf("blockDim: (%d, %d, %d)\n", blockDim.x, blockDim.y, blockDim.z);
     printf("gridDim: (%d, %d, %d)\n", gridDim.x, gridDim.y, gridDim.z);
 
-    matrixMulKernel<<<gridDim, blockDim>>>(M_d, N_d, P_d, Width);
+    KERNEL<<<gridDim, blockDim>>>(M_d, N_d, P_d, Width);
 
     cudaMemcpy(P, P_d, size, cudaMemcpyDeviceToHost);
 
