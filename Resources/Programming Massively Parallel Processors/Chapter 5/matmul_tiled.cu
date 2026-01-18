@@ -61,7 +61,7 @@ void matrixMul(float* M, float* N, float* P, int Width) {
     cudaFree(P_d);
 }
 
-static void matrixMul_timed((float* M, float* N, float* P, int Width);
+static void matrixMul_timed(float* M, float* N, float* P, int Width);
 
 void matrixMulCPU(float* M, float* N, float* P, int Width) {
     for (int row = 0; row < Width; ++row) {
