@@ -108,7 +108,7 @@ __global__ void matrixMulKernel_external_smem(float* M, float* N, float* P, int 
     extern __shared__ char Mds_Nds[];
     
     float* Mds = (float *) Mds_Nds;
-    float* Nds = (float *) Mds_Nds + (TILE_SIZE*TILE_SIZE);
+    float* Nds = (float *) Mds_Nds + (TILE_WIDTH*TILE_WIDTH);
 
     int bx = blockIdx.x;    int by = blockIdx.y;
     int tx = threadIdx.x;   int ty = threadIdx.y;
