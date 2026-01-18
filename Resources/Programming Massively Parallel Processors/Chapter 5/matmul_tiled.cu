@@ -3,6 +3,8 @@
 #include <stdio.h>      // printf
 #include <float.h>      // FLT_EPSILON
 
+#include <string.h>     // memset
+
 #define TILE_WIDTH 16
 
 
@@ -71,6 +73,36 @@ __global__ void matrixMulKernel_boundries(float* M, float* N, float* P, int Widt
         P[Row*Width + Col] = Pvalue;
 }
 
+__global__ void matrixMulKernel_external_smem(float* M, float* N, float* P, int Width, unsigned Mds_sz, unsigned Nds_sz)
+{
+    extern __shared__ char float Mds_Nds[];
+    
+    float* Mds = (float *) Mds_Nds;
+    float* Nds = (float *) Mds_Nds + Mds_sz;
+
+    int bx = blockIdx.x;    int by = blockIdx.y;
+    int tx = threadIdx.x;   int ty = threadIdx.y;
+
+    // Identify the row and column of the P element to work on
+    int Row = by * TILE_WIDTH + ty;
+    int Col = bx * TILE_WIDTH + tx;
+
+    // Loop over the M and N tiles required to compute P element
+    float Pvalue = 0;
+    for (int ph = 0; ph < Width/TILE_WIDTH; ++ph)
+    {
+        // Collaborative loading of M and N tiles into shared memory
+        Mds[ty*TILE_WIDTH + tx] = M[Row*Width +  ph*TILE_WIDTH + tx];
+        Nds[ty*TILE_WIDTH + tx] = N[(ph*TILE_WIDTH + ty)*Width + Col];
+        __syncthreads();
+
+        for (int k = 0; k < TILE_WIDTH; ++k)
+            Pvalue += Mds[ty*TILE_WIDTH + k] * Nds[k*TILE_WIDTH + tx]; // blockDim is TILE_WIDTH x TILE_WIDTH
+        __syncthreads();
+    }
+    P[Row*Width + Col] = Pvalue;
+}
+
 #ifndef KERNEL
 #define KERNEL matrixMulKernel_boundries
 #endif
@@ -104,6 +136,37 @@ void matrixMul(float* M, float* N, float* P, int Width) {
 
 static void matrixMul_timed(float* M, float* N, float* P, int Width);
 
+
+void matrixMul_dynamic_smem(float* M, float* N, float* P, int Width)
+{
+    size_t size = 2 * TILE_WIDTH * TILE_WIDTH * sizeof(float);
+    
+    float *M_d, *N_d, *P_d;
+    cudaMalloc((void **)&M_d, size/2);
+    cudaMalloc((void **)&N_d, size/2);
+    cudaMalloc((void **)&P_d, size/2);
+
+    cudaMemcpy(M_d, M, size/2, cudaMemcpyHostToDevice);
+    cudaMemcpy(N_d, N, size/2, cudaMemcpyHostToDevice);
+    
+    dim3 blockDim(TILE_WIDTH, TILE_WIDTH);
+    dim3 gridDim(ceil(Width / (float)blockDim.x), ceil(Width / (float)blockDim.y));
+
+    printf("TILE_WIDTH: %d\n", TILE_WIDTH);
+    printf("blockDim: (%d, %d, %d)\n", blockDim.x, blockDim.y, blockDim.z);
+    printf("gridDim: (%d, %d, %d)\n", gridDim.x, gridDim.y, gridDim.z);
+
+    matrixMulKernel_external_smem<<<gridDim, blockDim, size>>>(M_d, N_d, P_d, Width, size/2, size/2);
+
+    cudaMemcpy(P, P_d, size, cudaMemcpyDeviceToHost);
+
+    cudaFree(M_d);
+    cudaFree(N_d);
+    cudaFree(P_d);
+}
+
+
+
 void matrixMulCPU(float* M, float* N, float* P, int Width) {
     for (int row = 0; row < Width; ++row) {
         for (int col = 0; col < Width; ++col) {
@@ -117,6 +180,31 @@ void matrixMulCPU(float* M, float* N, float* P, int Width) {
         }
     }
 }
+
+// void matrixMul(float* M, float* N, float* P, int J, int K, int L) { }
+
+// void matrixMulCPU(const float* restrict M, const float* restrict N, float* P, int J, int K, int L) {
+//     // M: J x K
+//     // N: K x L
+//     // P: J x L
+
+//     for (int row = 0; row < J; ++row) {
+//         for (int col = 0; col < L; ++col) {
+//             float sum = 0.0f;
+
+//             // The shared (contracted) dimension is K:
+//             // M[row, k] * N[k, col], k < K
+//             for (int k = 0; k < K; ++k) {
+//                 const float a = M[row*K + k];
+//                 const float b = N[k*L + col];
+//                 sum += a*b;
+//             }
+//             P[row*L + col] = sum;
+//         }
+//     }
+// }
+
+
 
 int main(int argc, char* argv[])
 {
@@ -139,7 +227,7 @@ int main(int argc, char* argv[])
         }
     }
 
-    matrixMul_timed(M, N, P_gpu, Width);
+    matrixMul_dynamic_smem(M, N, P_gpu, Width);
     matrixMulCPU(M, N, P_cpu, Width);
 
     // const float abs_tol = 1e-6f;    // 1e-3
