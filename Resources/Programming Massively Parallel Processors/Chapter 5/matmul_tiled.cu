@@ -1,6 +1,4 @@
 #include <cuda_runtime.h>
-#include <cublas_v2.h>
-
 #include <stdlib.h>     // rand
 #include <stdio.h>      // printf
 #include <float.h>      // FLT_EPSILON
@@ -14,7 +12,7 @@ __global__ void matrixMulKernel(float* M, float* N, float* P, int Width)
     __shared__ float Nds[TILE_WIDTH][TILE_WIDTH];
 
     int bx = blockIdx.x;    int by = blockIdx.y;
-    int tx = threadIdx.x;   int ty = threadIdx.y; 
+    int tx = threadIdx.x;   int ty = threadIdx.y;
 
     // Identify the row and column of the P element to work on
     int Row = by * TILE_WIDTH + ty;
@@ -54,44 +52,16 @@ void matrixMul(float* M, float* N, float* P, int Width) {
     printf("blockDim: (%d, %d, %d)\n", blockDim.x, blockDim.y, blockDim.z);
     printf("gridDim: (%d, %d, %d)\n", gridDim.x, gridDim.y, gridDim.z);
 
-
-    // Warm
-    const int warmups = 1;
-
-    for (int i = 0; i < warmups; ++i)
-        matrixMulKernel<<<gridDim, blockDim>>>(M_d, N_d, P_d, Width);
-
-
-    cudaEvent_t start, stop;
-    cudaEventCreate(&start);
-    cudaEventCreate(&stop);
-
-    int iters = 5;
-    cudaEventRecord(start);
     matrixMulKernel<<<gridDim, blockDim>>>(M_d, N_d, P_d, Width);
-
-    cudaEventRecord(stop);
-    cudaEventSynchronize(stop);
-
-    float ms = 0.0;
-    cudaEventElapsedTime(&ms, start, stop);
-    double avg_ms = ms / iters;
-
-    double flops = 2.0 * (double)Width * (double)Width * (double)Width;
-    double gflops = (flops / (avg_ms / 1e3)) / 1e9;
-
-    printf("matrixMulKernel\n");
-    printf("Avg GEMM time: %.3f ms\n", avg_ms);
-    printf("Throughput:    %.1f GFLOP/s\n", gflops);
-
 
     cudaMemcpy(P, P_d, size, cudaMemcpyDeviceToHost);
 
-    cudaEventDestroy(start); cudaEventDestroy(stop);
     cudaFree(M_d);
     cudaFree(N_d);
     cudaFree(P_d);
 }
+
+static void matrixMul_timed((float* M, float* N, float* P, int Width);
 
 void matrixMulCPU(float* M, float* N, float* P, int Width) {
     for (int row = 0; row < Width; ++row) {
@@ -172,4 +142,62 @@ int main(int argc, char* argv[])
     free(P_cpu);
 
     return 0;
+}
+
+void matrixMul_timed(float* M, float* N, float* P, int Width) {
+    int size = Width * Width * sizeof(float);
+
+    float *M_d, *N_d, *P_d;
+    cudaMalloc((void **)&M_d, size);
+    cudaMalloc((void **)&N_d, size);
+    cudaMalloc((void **)&P_d, size);
+
+    cudaMemcpy(M_d, M, size, cudaMemcpyHostToDevice);
+    cudaMemcpy(N_d, N, size, cudaMemcpyHostToDevice);
+    
+    dim3 blockDim(TILE_WIDTH, TILE_WIDTH);
+    dim3 gridDim(ceil(Width / (float)blockDim.x), ceil(Width / (float)blockDim.y));
+
+    printf("TILE_WIDTH: %d\n", TILE_WIDTH);
+    printf("blockDim: (%d, %d, %d)\n", blockDim.x, blockDim.y, blockDim.z);
+    printf("gridDim: (%d, %d, %d)\n", gridDim.x, gridDim.y, gridDim.z);
+
+
+    // Warm
+    const int warmups = 1;
+
+    for (int i = 0; i < warmups; ++i)
+        matrixMulKernel<<<gridDim, blockDim>>>(M_d, N_d, P_d, Width);
+
+    cudaDeviceSynchronize();
+
+    cudaEvent_t start, stop;
+    cudaEventCreate(&start);
+    cudaEventCreate(&stop);
+
+    int iters = 5;
+    cudaEventRecord(start);
+    matrixMulKernel<<<gridDim, blockDim>>>(M_d, N_d, P_d, Width);
+
+    cudaEventRecord(stop);
+    cudaEventSynchronize(stop);
+
+    float ms = 0.0;
+    cudaEventElapsedTime(&ms, start, stop);
+    double avg_ms = ms / iters;
+
+    double flops = 2.0 * (double)Width * (double)Width * (double)Width;
+    double gflops = (flops / (avg_ms / 1e3)) / 1e9;
+
+    printf("matrixMulKernel\n");
+    printf("Avg GEMM time: %.3f ms\n", avg_ms);
+    printf("Throughput:    %.1f GFLOP/s\n", gflops);
+
+
+    cudaMemcpy(P, P_d, size, cudaMemcpyDeviceToHost);
+
+    cudaEventDestroy(start); cudaEventDestroy(stop);
+    cudaFree(M_d);
+    cudaFree(N_d);
+    cudaFree(P_d);
 }
