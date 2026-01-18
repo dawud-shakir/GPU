@@ -139,6 +139,8 @@ void matrixMul_dynamic_smem(float* M, float* N, float* P, int Width)
 {
     size_t size = Width * Width * sizeof(float);
     
+    size_t smem_size = 2 * TILE_WIDTH * TILE_WIDTH * sizeof(float);
+    printf("smem bytes: %zu\n", smem_size);
 
     float *M_d, *N_d, *P_d;
     cudaMalloc((void **)&M_d, size);
@@ -155,7 +157,7 @@ void matrixMul_dynamic_smem(float* M, float* N, float* P, int Width)
     printf("blockDim: (%d, %d, %d)\n", blockDim.x, blockDim.y, blockDim.z);
     printf("gridDim: (%d, %d, %d)\n", gridDim.x, gridDim.y, gridDim.z);
 
-    size_t smem_size = 2 * TILE_WIDTH * TILE_WIDTH * sizeof(float);
+
     matrixMulKernel_external_smem<<<gridDim, blockDim, smem_size>>>(M_d, N_d, P_d, Width, smem_size/2, smem_size/2);
 
     cudaMemcpy(P, P_d, size, cudaMemcpyDeviceToHost);
