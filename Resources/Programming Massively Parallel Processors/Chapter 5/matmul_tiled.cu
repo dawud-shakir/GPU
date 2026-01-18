@@ -72,7 +72,7 @@ void matrixMul(float* M, float* N, float* P, int Width) {
     cudaEventSynchronize(stop);
 
     float ms = 0.0;
-    cudaEventElaspedTime(&ms, start, stop);
+    cudaEventElapsedTime(&ms, start, stop);
     double avg_ms = ms / iters;
 
     double flops = 2.0 * (double)Width * (double)Width * (double)Width;
