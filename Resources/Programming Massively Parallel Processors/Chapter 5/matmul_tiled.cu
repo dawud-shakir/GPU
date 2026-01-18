@@ -108,7 +108,7 @@ __global__ void matrixMulKernel_external_smem(float* M, float* N, float* P, int 
     extern __shared__ char Mds_Nds[];
     
     float* Mds = (float *) Mds_Nds;
-    float* Nds = (float *) (Mds_Nds + Mds_sz); // Mds_Nds + (TILE_WIDTH*TILE_WIDTH);
+    float* Nds = (float *) (Mds_Nds + Mds_sz);
 
     int bx = blockIdx.x;    int by = blockIdx.y;
     int tx = threadIdx.x;   int ty = threadIdx.y;
@@ -140,7 +140,7 @@ void matrixMul_dynamic_smem(float* M, float* N, float* P, int Width)
     size_t size = Width * Width * sizeof(float);
     
     size_t smem_size = 2 * TILE_WIDTH * TILE_WIDTH * sizeof(float);
-    printf("smem bytes: %zu\n", smem_size);
+    printf("TILE_WIDTH: %zu, smem bytes: %zu\n", TILE_WIDTH, smem_size);
 
     float *M_d, *N_d, *P_d;
     cudaMalloc((void **)&M_d, size);
