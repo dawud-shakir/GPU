@@ -208,7 +208,7 @@ void matrixMul_timed(float* M, float* N, float* P, int Width) {
     const int warmups = 1;
 
     for (int i = 0; i < warmups; ++i)
-        matrixMulKernel<<<gridDim, blockDim>>>(M_d, N_d, P_d, Width);
+        KERNEL<<<gridDim, blockDim>>>(M_d, N_d, P_d, Width);
 
     cudaDeviceSynchronize();
 
