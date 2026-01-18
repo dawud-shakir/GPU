@@ -61,8 +61,8 @@ void matrixMul(float* M, float* N, float* P, int Width) {
 
 
     cudaEvent_t start, stop;
-    cudaEventCreate(&event);
-    cudaEventCrease(&stop);
+    cudaEventCreate(&start);
+    cudaEventCreate(&stop);
 
     int iters = 5;
     cudaEventRecord(start);
