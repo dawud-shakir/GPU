@@ -14,7 +14,7 @@ __global__ void matrixMulKernel(float* M, float* N, float* P, int Width)
     __shared__ float Nds[TILE_WIDTH][TILE_WIDTH];
 
     int bx = blockIdx.x;    int by = blockIdx.y;
-    int tx = threadIdx.x;   int ty = threadIdx.y;
+    int tx = threadIdx.x;   int ty = threadIdx.y; 
 
     // Identify the row and column of the P element to work on
     int Row = by * TILE_WIDTH + ty;
