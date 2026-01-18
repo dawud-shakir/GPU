@@ -91,7 +91,7 @@ void matrixMul(float* M, float* N, float* P, int Width) {
     printf("blockDim: (%d, %d, %d)\n", blockDim.x, blockDim.y, blockDim.z);
     printf("gridDim: (%d, %d, %d)\n", gridDim.x, gridDim.y, gridDim.z);
 
-    KERNEL<<<gridDim, blockDim>>>(M_d, N_d, P_d, Width);
+    matrixMulKernel<<<gridDim, blockDim>>>(M_d, N_d, P_d, Width);
 
     cudaMemcpy(P, P_d, size, cudaMemcpyDeviceToHost);
 
