@@ -1,4 +1,6 @@
 #include <cuda_runtime.h>
+#include <cublas_v2.h>
+
 #include <stdlib.h>     // rand
 #include <stdio.h>      // printf
 #include <float.h>      // FLT_EPSILON
