@@ -73,6 +73,36 @@ __global__ void matrixMulKernel_boundries(float* M, float* N, float* P, int Widt
         P[Row*Width + Col] = Pvalue;
 }
 
+void matrixMul(float* M, float* N, float* P, int Width) {
+    int size = Width * Width * sizeof(float);
+
+    float *M_d, *N_d, *P_d;
+    cudaMalloc((void **)&M_d, size);
+    cudaMalloc((void **)&N_d, size);
+    cudaMalloc((void **)&P_d, size);
+
+    cudaMemcpy(M_d, M, size, cudaMemcpyHostToDevice);
+    cudaMemcpy(N_d, N, size, cudaMemcpyHostToDevice);
+    
+    dim3 blockDim(TILE_WIDTH, TILE_WIDTH);
+    dim3 gridDim(ceil(Width / (float)blockDim.x), ceil(Width / (float)blockDim.y));
+
+    printf("TILE_WIDTH: %d\n", TILE_WIDTH);
+    printf("blockDim: (%d, %d, %d)\n", blockDim.x, blockDim.y, blockDim.z);
+    printf("gridDim: (%d, %d, %d)\n", gridDim.x, gridDim.y, gridDim.z);
+
+    KERNEL<<<gridDim, blockDim>>>(M_d, N_d, P_d, Width);
+
+    cudaMemcpy(P, P_d, size, cudaMemcpyDeviceToHost);
+
+    cudaFree(M_d);
+    cudaFree(N_d);
+    cudaFree(P_d);
+}
+
+static void matrixMul_timed(float* M, float* N, float* P, int Width);
+
+
 __global__ void matrixMulKernel_external_smem(float* M, float* N, float* P, int Width, unsigned Mds_sz, unsigned Nds_sz)
 {
     extern __shared__ float Mds_Nds[];
@@ -103,38 +133,6 @@ __global__ void matrixMulKernel_external_smem(float* M, float* N, float* P, int 
     P[Row*Width + Col] = Pvalue;
 }
 
-#ifndef KERNEL
-#define KERNEL matrixMulKernel_boundries
-#endif
-
-void matrixMul(float* M, float* N, float* P, int Width) {
-    int size = Width * Width * sizeof(float);
-
-    float *M_d, *N_d, *P_d;
-    cudaMalloc((void **)&M_d, size);
-    cudaMalloc((void **)&N_d, size);
-    cudaMalloc((void **)&P_d, size);
-
-    cudaMemcpy(M_d, M, size, cudaMemcpyHostToDevice);
-    cudaMemcpy(N_d, N, size, cudaMemcpyHostToDevice);
-    
-    dim3 blockDim(TILE_WIDTH, TILE_WIDTH);
-    dim3 gridDim(ceil(Width / (float)blockDim.x), ceil(Width / (float)blockDim.y));
-
-    printf("TILE_WIDTH: %d\n", TILE_WIDTH);
-    printf("blockDim: (%d, %d, %d)\n", blockDim.x, blockDim.y, blockDim.z);
-    printf("gridDim: (%d, %d, %d)\n", gridDim.x, gridDim.y, gridDim.z);
-
-    KERNEL<<<gridDim, blockDim>>>(M_d, N_d, P_d, Width);
-
-    cudaMemcpy(P, P_d, size, cudaMemcpyDeviceToHost);
-
-    cudaFree(M_d);
-    cudaFree(N_d);
-    cudaFree(P_d);
-}
-
-static void matrixMul_timed(float* M, float* N, float* P, int Width);
 
 
 void matrixMul_dynamic_smem(float* M, float* N, float* P, int Width)
@@ -204,7 +202,10 @@ void matrixMulCPU(float* M, float* N, float* P, int Width) {
 //     }
 // }
 
-
+// Kernel to use for timing function
+#ifndef KERNEL
+#define KERNEL matrixMulKernel_boundries
+#endif
 
 int main(int argc, char* argv[])
 {
